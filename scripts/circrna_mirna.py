@@ -68,13 +68,26 @@ dataframes = [GSE113153, GSE118959_C1, GSE118959_C9]
 
 column_join = pd.concat(dataframes, join="outer").sort_index().reset_index()
 
+# require circrnas in all three datasets:
 column_join = column_join.groupby('Alias').filter(lambda x : x['Alias'].shape[0]>2)
 
-column_join.to_csv("/data/github/pca_network/scripts/test.csv", index=False)
+# save for now:
+#column_join.to_csv("/data/github/pca_network/scripts/test.csv", index=False)
 
+# print boolean of circRNAs that have agreement for logFC sign:
 print(column_join.groupby('Alias').apply(lambda x: (x['logFC'] > 0).all() or (x['logFC'] < 0).all()))
 
+# save boolean obj and use index of 'True' to subset column_join.
+boolean_index_series = column_join.groupby('Alias').apply(lambda x: (x['logFC'] > 0).all() or (x['logFC'] < 0).all())
 
+# nested bool[bool] returns true for series obj
+column_join = column_join[column_join['Alias'].isin(boolean_index_series[boolean_index_series].index)]
+
+print(column_join)
+
+column_join.to_csv("/data/github/pca_network/scripts/test2.csv", index=False)
+
+# you need to use boolean index (hsa_circ_0000) as the subset key on 'Alias' in column_join
 # decide how to handle differing LFC vals? 66 circs overlapping all three exps... 
 
 ## 
