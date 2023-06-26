@@ -1,7 +1,6 @@
 #!/usr/bin/env Rscript 
 
-# add arguments if and when directories are moved around
-args <- commandArgs(trailingOnly=TRUE)
+library(limma)
 
 raw_data_dir <- "/data/github/pca_network/data/GSE21036/"
 sdrf_location <- file.path(raw_data_dir, "E-GEOD-21036.sdrf.txt")
@@ -50,7 +49,7 @@ sd_ratio <- sqrt(percentVar[2] / percentVar[1])
 dataGG <- data.frame(PC1 = PCA$x[,1], PC2 = PCA$x[,2],
                      Status = meta$tumor_type)
 library(ggplot2)
-pdf(height=4, width=5)
+pdf("/data/github/pca_network/mirna/GSE21036/GSE21036_PCA.pdf", height=4, width=5)
 ggpubr::ggscatter(dataGG, x="PC1", y="PC2",
                   color = "Status", palette = c("chartreuse", "purple", "orange"),
                   title = "Log-transformed normalized expression data\n [GSE21036]",
@@ -112,9 +111,9 @@ normal_vs_all = ann_res(normal_vs_all)
 
 # names for boxplot sanity checks which work as expected now
 
-write.table(tumor_vs_normal, "/data/github/pca_network/results/GSE21036/tumor_vs_normal.txt", row.names = T, quote=F, sep="\t")
-write.table(metastasis_vs_normal, "/data/github/pca_network/results/GSE21036/metastasis_vs_normal.txt", row.names = T, quote=F, sep="\t")
-write.table(metastasis_vs_tumor, "/data/github/pca_network/results/GSE21036/metastasis_vs_tumor.txt", row.names = T, quote=F, sep="\t")
-write.table(metastasis_vs_all, "/data/github/pca_network/results/GSE21036/metastasis_vs_all.txt", row.names = T, quote=F, sep="\t")
-write.table(tumor_vs_all, "/data/github/pca_network/results/GSE21036/tumor_vs_all.txt", row.names = T, quote=F, sep="\t")
-write.table(normal_vs_all, "/data/github/pca_network/results/GSE21036/normal_vs_all", row.names = T, quote=F, sep="\t")
+write.table(tumor_vs_normal[,c(3:9)], "/data/github/pca_network/mirna/GSE21036/tumor_vs_normal.txt", row.names = F, quote=F, sep="\t")
+write.table(metastasis_vs_normal[,c(3:9)], "/data/github/pca_network/mirna/GSE21036/metastasis_vs_normal.txt", row.names = F, quote=F, sep="\t")
+write.table(metastasis_vs_tumor[,c(3:9)], "/data/github/pca_network/mirna/GSE21036/metastasis_vs_tumor.txt", row.names = F, quote=F, sep="\t")
+write.table(metastasis_vs_all[,c(3:9)], "/data/github/pca_network/mirna/GSE21036/metastasis_vs_all.txt", row.names = F, quote=F, sep="\t")
+write.table(tumor_vs_all[,c(3:9)], "/data/github/pca_network/mirna/GSE21036/tumor_vs_all.txt", row.names = F, quote=F, sep="\t")
+write.table(normal_vs_all[,c(3:9)], "/data/github/pca_network/mirna/GSE21036/normal_vs_all.txt", row.names = F, quote=F, sep="\t")

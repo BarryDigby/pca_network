@@ -40,7 +40,7 @@ dataGG <- data.frame(PC1 = PCA$x[,1], PC2 = PCA$x[,2],
                      Status = meta$status,
                      Stage  = meta$stage)
 library(ggplot2)
-pdf(height=4, width=5)
+pdf("/data/github/pca_network/mirna/GSE23022/GSE23022_PCA.pdf", height=4, width=5)
 ggpubr::ggscatter(dataGG, x="PC1", y="PC2",
                   color = "Status", palette = c("royalblue", "orangered"),
                   title = "Log-transformed normalized expression data\n [GSE23022]",
@@ -77,7 +77,8 @@ tt <- limma::topTable(fit, number=Inf, p.value=0.05, adjust.method ="BH")
 # pretty good agreement with results in paper, roughly 5 miRs are different. 
 # They used graph pad prism, we used limma which I am more comfortable citing. 
 hsa_tt <- tt[grep("^hsa", row.names(tt)),]
-write.table(hsa_tt, "/data/github/pca_network/mirna/GSE23022/tumor_vs_normal.txt", row.names = T, quote=F, sep="\t")
+hsa_tt <- tibble::rownames_to_column(hsa_tt, "miRNA")
+write.table(hsa_tt, "/data/github/pca_network/mirna/GSE23022/tumor_vs_normal.txt", row.names = F, quote=F, sep="\t")
 
 
 

@@ -29,10 +29,10 @@ sd_ratio <- sqrt(percentVar[2] / percentVar[1])
 dataGG <- data.frame(PC1 = PCA$x[,1], PC2 = PCA$x[,2],
                      Group = meta$group)
 library(ggplot2)
-pdf(width = 5, height = 4)
+pdf("/data/github/pca_network/mrna/GSE143408/GSE143408_PCA.pdf", width = 5, height = 4)
 ggpubr::ggscatter(dataGG, x="PC1", y="PC2",
                   color = "Group", palette = c("chartreuse", "purple", "orange", "dodgerblue3"),
-                  title = "PCA plot log-transformed RMA normalized expression data\n [GSE143408]",
+                  title = "PCA plot log-transformed\nRMA normalized expression data\n [GSE143408]",
                   xlab = paste0("PC1, VarExp: ", percentVar[1], "%"),
                   ylab = paste0("PC2, VarExp: ", percentVar[2], "%"),
                   ellipse = FALSE, star.plot = FALSE,
@@ -102,3 +102,17 @@ write.table(day21_vs_below, "/data/github/pca_network/mrna/GSE143408/21_vs_14+7+
 write.table(day14_vs_control, "/data/github/pca_network/mrna/GSE143408/14_vs_0.txt", row.names = T, quote=F, sep="\t")
 write.table(day21_vs_control, "/data/github/pca_network/mrna/GSE143408/21_vs_0.txt", row.names = T, quote=F, sep="\t")
 
+summary = function(df){
+  z = table(sign(df$logFC))
+  up = z[[1]]
+  down = z[[2]]
+  print(paste0("Up reg: ", up, "     Down reg: ", down))
+}
+
+summary(day7)
+summary(day14)
+summary(day21)
+summary(day14_vs_below)
+summary(day14_vs_control)
+summary(day21_vs_below)
+summary(day21_vs_control)
