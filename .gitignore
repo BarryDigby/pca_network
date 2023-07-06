@@ -1,3 +1,5 @@
 data/circbank_miRNA_all_v1.txt
 data/HumanHT-12_V4_0_R2_15002873_B.txt
 data/GSE143408/GPL25684-tbl-1.txt
+data/miRDB_v6.0_prediction_result.txt
+data/mirna_mrna.txt

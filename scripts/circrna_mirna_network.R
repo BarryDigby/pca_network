@@ -28,4 +28,4 @@ intersection = merge(intersection, avg_mirna, by.x="miR_ID", by.y="miRNA")
 
 intersection = intersection[,c(2,3,1,4)]
 intersection = intersection[order(intersection$circbase_ID),]
-write.table(intersection, "/data/github/pca_network/results/circrna_mirna_network.txt", sep="\t", row.names = F)
+write.table(intersection, "/data/github/pca_network/results/circrna_mirna_network.txt", quote=F,  sep="\t", row.names = F)
