@@ -69,6 +69,7 @@ ann.res = function(df){
   o = order(x$AveExp, decreasing = T)
   dup = duplicated(x$gene[o])
   x = x[o,][!dup,]
+  x = x[which(x$biotype=="protein_coding"),]
   return(x)
 }
 

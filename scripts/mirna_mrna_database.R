@@ -1,20 +1,40 @@
 #!/usr.bin/env Rscript
-
+library(dplyr)
+# load circrna - mirna links (found by DE)
 mirna_network = read.table("/data/github/pca_network/results/circrna_mirna_network.txt", header=T, sep="\t")
-mirna_mrna = read.table("/data/github/pca_network/data/mirna_mrna.txt", header=F, sep="\t")
-# reduce load on R. one is missing,  hsa-miR-375 no -3p or -5p on it.  
-mirna_mrna = mirna_mrna[which(mirna_mrna$V1 %in% mirna_network$miR_ID),]
+# load miRBase, miRNet predicted mirna - mrna genes. 
+# subset this large dataset with your DE validated mirnas.
+mirbase = read.table("/data/github/pca_network/data/mirbase.txt", header=F, sep="\t")
+colnames(mirbase) = c("ID", "Target", "Score")
+mirbase = mirbase[,c(1:2)]
 
-#hgnc symbols
+mirnet = read.csv("/data/github/pca_network/data/mirnet2gene.csv", sep=",", header=T)
+mirnet = mirnet[,c(1,3)]
+mirnet$ID = gsub("mir", "miR", mirnet$ID)
+
+mirtarbase = read.csv("/data/github/pca_network/data/miRTarBase.csv", header=T, sep=",")
+mirtarbase = mirtarbase[which(mirtarbase$Species..miRNA.=="Homo sapiens"),]
+mirtarbase = mirtarbase[,c(2,4)]
+colnames(mirtarbase) = c("ID", "Target")
+
+# reduce load on R. one is missing,  hsa-miR-375 no -3p or -5p on it? 
+mirbase = mirbase[which(mirbase$ID %in% mirna_network$miR_ID),]
+mirnet = mirnet[which(mirnet$ID %in% mirna_network$miR_ID),]
+mirtarbase = mirtarbase[which(mirtarbase$ID %in% mirna_network$miR_ID),]
+
+#hgnc symbols for miRBase
 mart <- biomaRt::useMart(biomart = "ensembl", dataset = "hsapiens_gene_ensembl")
 info <- biomaRt::getBM(attributes=c("hgnc_symbol",
                            "refseq_mrna"),
                             filters = c("refseq_mrna"),
-                            values = unique(mirna_mrna$V2),
+                            values = unique(mirbase$Target),
                             mart = mart,
                             useCache=TRUE)
-mirna_mrna = merge(mirna_mrna, info, by.x="V2", by.y="refseq_mrna", all.x = T)
-mirna_mrna = mirna_mrna[,c(2,4)]
-colnames(mirna_mrna) = c("miRNA", "Gene")
-mirna_mrna = mirna_mrna[order(mirna_mrna$miRNA),]
-write.table(mirna_mrna, "/data/github/pca_network/results/mirna_mrna.txt", quote = F, sep="\t", row.names = F)
+mirbase = merge(mirbase, info, by.x="Target", by.y="refseq_mrna", all.x = T)
+mirbase = mirbase[,c(2,3)]
+colnames(mirbase) = c("ID", "Target")
+
+master = rbind(mirbase, mirnet, mirtarbase)
+master = master %>% unique()
+
+write.table(master, "/data/github/pca_network/results/mirna_mrna_db.txt", sep="\t", row.names = F, quote=F)

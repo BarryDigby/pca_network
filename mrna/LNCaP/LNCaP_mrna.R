@@ -41,7 +41,7 @@ sd_ratio <- sqrt(percentVar[2] / percentVar[1])
 dataGG <- data.frame(PC1 = PCA$x[,1], PC2 = PCA$x[,2],
                      Group = meta$group)
 library(ggplot2)
-pdf("/data/github/pca_network/mrna/LNCaP/LNCaP_mrna_PCA.pdf", height=4, width=5)
+pdf("/data/github/pca_network/mrna/LNCaP/LNCaP_mrna_PCA.pdf", height=3, width=4)
 ggpubr::ggscatter(dataGG, x="PC1", y="PC2",
                   color = "Group", palette = c("forestgreen", "red", "royalblue"),
                   title = "Log-transformed normalized expression data\n [LNCaP RNA-Seq]",
