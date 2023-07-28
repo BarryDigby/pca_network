@@ -38,16 +38,16 @@ ggpubr::ggscatter(dataGG, x="PC1", y="PC2",
 dev.off()
 
 
-probes = read.table("/data/github/pca_network/data/arraystar_probes.csv", sep="\t", header=T)
+probes = read.table("/data/github/pca_network/data/arraystar_updated_circbaseID.csv", sep="\t", header=T)
 
 ann_res = function(res){
-  probe = subset(probes, select=c(probeID, circRNA, Alias, GeneSymbol))
+  probe = subset(probes, select=c(probeID, circRNA, circbaseID, GeneSymbol))
   x = merge(res, probe, by.x=0, by.y="probeID")
   return(x)
 }
 
-design <- model.matrix( ~ 0 + meta$Gleason + meta$Replicate )
-colnames(design) <- c( "High", "Low", "Rep2", "Rep3", "Rep4", "Rep5")
+design <- model.matrix( ~ 0 + meta$Gleason  )
+colnames(design) <- c( "High", "Low")
 
 contrast = makeContrasts(high_vs_low = High-Low,
                          levels = design)

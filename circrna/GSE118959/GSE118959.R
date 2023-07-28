@@ -38,16 +38,16 @@ ggpubr::ggscatter(dataGG, x="PC1", y="PC2",
   theme(plot.title = element_text(hjust = 0.5, face = "bold"))
 dev.off()
 
-probes = read.table("/data/github/pca_network/data/arraystar_probes.csv", sep="\t", header=T)
+probes = read.table("/data/github/pca_network/data/arraystar_updated_circbaseID.csv", sep="\t", header=T)
 
 ann_res = function(res){
-  probe = subset(probes, select=c(probeID, circRNA, Alias, GeneSymbol))
+  probe = subset(probes, select=c(probeID, circRNA, circbaseID, GeneSymbol))
   x = merge(res, probe, by.x=0, by.y="probeID")
   return(x)
 }
 
-design <- model.matrix( ~ 0 + meta$Treatment + meta$Replicate )
-colnames(design) <- c( "Clone1", "Clone9", "Control", "Rep2", "Rep3")
+design <- model.matrix( ~ 0 + meta$Treatment )
+colnames(design) <- c( "Clone1", "Clone9", "Control")
 # design <- cbind(design, Control=meta$Treatment=="Control")
 # design <- cbind(design, Clone1=meta$Treatment=="Clone1")
 # design <- cbind(design, Clone9=meta$Treatment=="Clone9")

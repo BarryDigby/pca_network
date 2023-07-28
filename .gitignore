@@ -1,8 +1,12 @@
 data/miRDB_v6.0_prediction_result.txt
+data/CDSC_subset_cirbase_entries.txt
 data/HumanHT-12_V4_0_R2_15002873_B.txt
+data/CDSC.circs.sort.txt
+data/cirbase_cdsc_join.txt
 data/miRTarBase.csv
 data/mirbase.txt
 data/GSE143408/GPL25684-tbl-1.txt
+data/CDSC.txt
 data/circbank_miRNA_all_v1.txt
 mrna/GSE88752/ENSG_VERSION_TO_SYMBOL.txt
 mrna/GSE88752/gencode.v21.annotation.gtf

@@ -1,6 +1,8 @@
 #!/usr/bin/env Rscript 
 
 library(limma)
+library(dplyr)
+library(stringr)
 
 raw_data_dir <- "/data/github/pca_network/data/GSE21036/"
 sdrf_location <- file.path(raw_data_dir, "E-GEOD-21036.sdrf.txt")
@@ -62,7 +64,7 @@ ggpubr::ggscatter(dataGG, x="PC1", y="PC2",
 dev.off()
 # looks good, the vcap sample was down by metastasis samples  
 
-# really suspicious gene annotation, force recovery:
+# really suspicious gene annotation, create unique hsa-miR IDs for DEG analysis, we can convert back after. 
 y = yfilt$genes
 y$key <- paste(y$Row, y$Col, y$GeneName, sep="_")
 rownames(yfilt$E) = y$key
@@ -82,12 +84,77 @@ contrast_matrix <- limma::makeContrasts(tumor_vs_normal = statusTumor-statusNorm
 
 fit <- limma::eBayes(limma::contrasts.fit(limma::lmFit(yfilt, design = design), contrast_matrix))
 
+## This microarray rode design uses old school hsa-miR-XXX* notation, which is superceded by hsa-miR-XXX-5p/3p
+## download mirbase aliases to recover.
+
+alias = read.csv("/data/github/pca_network/data/mirbase_aliases_tabbed.txt", sep="\t", header=F)
+
+## Use updated -3p/-5p notation instead of *
+update_id = function(df) {
+  out_vec = c()
+  for (index in 1:length(df$SystematicName)) {
+    ## stage miRNA from tt
+    mir = df$SystematicName[index]
+    ## if its end in * add \\* for str_detect REGEX
+    if (grepl("\\*", mir)) {
+      mir <- gsub("\\*", "\\\\*", mir)
+    }
+    # grab the corresponding row in Alias
+    row = alias %>% filter_all(any_vars(str_detect(., paste0("\\b", gsub("\\*", "\\\\\\*", mir), "\\b"))))
+    if (nrow(row) == 0) {
+      # no match with alias, keep original label as it is valid.
+      out_vec = c(out_vec, mir)
+    } else{
+      # Vectorise these.. so you can do n + 1
+      if (nrow(row) == 1) {
+        # match does not like escaping chars
+        row_vec = unname(unlist(row[1, ]))
+        idx = match(gsub("\\\\", "", mir), row_vec)
+        idx = idx + 1
+        out_st = row_vec[idx]
+        # if it now contains a *, move to next 'latest version'. this is rare. 
+        if(grepl("\\*", out_st)){out_st = row_vec[idx+1]}
+        # sometimes the matching string is correct, but also matches alias in V3 (no adjacent text)
+        if(out_st == "" || is.na(out_st)){out_st=gsub("\\\\", "", mir)}
+        out_vec = c(out_vec, out_st)
+      } else if (nrow(row)==2){
+        row_vec =  c(unname(unlist(row[1, ])), unname(unlist(row[2, ])))
+        idx = match(gsub("\\\\", "", mir), row_vec)
+        idx = idx + 1
+        out_st = row_vec[idx]
+        # if it now contains a *, move to next 'latest version'. this is rare. 
+        if(grepl("\\*", out_st)){out_st = row_vec[idx+1]}
+        # sometimes the matching string is correct, but also matches alias in V3 (no adjacent text)
+        if(out_st == "" || is.na(out_st)){out_st=gsub("\\\\", "", mir)}
+        out_vec = c(out_vec, out_st)
+      } else {
+        # edeg cases that draw three rows
+        row_vec =  c(unname(unlist(row[1, ])), unname(unlist(row[2, ])), unname(unlist(row[3, ])))
+        idx = match(gsub("\\\\", "", mir), row_vec)
+        idx = idx + 1
+        out_st = row_vec[idx]
+        # if it now contains a *, move to next 'latest version'. this is rare. 
+        if(grepl("\\*", out_st)){out_st = row_vec[idx+1]}
+        # sometimes the matching string is correct, but also matches alias in V3 (no adjacent text)
+        if(out_st == "" || is.na(out_st)){out_st=gsub("\\\\", "", mir)}
+        out_vec = c(out_vec, out_st)
+      }
+    }
+  }
+  return(out_vec)
+}
+
+
 ann_res = function(df){
   keep <- c("Row", "Col", "SystematicName", "logFC", "AveExpr", "t" ,"P.Value","adj.P.Val","B")
   o <- order(df$AveExpr, decreasing=TRUE)
   dup <- duplicated(df$GeneName[o])
   df <- df[o,][!dup,]
   df <- df[,keep]
+  df <- dplyr::filter(df, grepl('hsa', SystematicName))
+  df$new_id <- update_id(df)
+  df$SystematicName <- df$new_id
+  df = df[,c(3:9)]
   return(df)
 }
 
@@ -111,9 +178,9 @@ normal_vs_all = ann_res(normal_vs_all)
 
 # names for boxplot sanity checks which work as expected now
 
-write.table(tumor_vs_normal[,c(3:9)], "/data/github/pca_network/mirna/GSE21036/tumor_vs_normal.txt", row.names = F, quote=F, sep="\t")
-write.table(metastasis_vs_normal[,c(3:9)], "/data/github/pca_network/mirna/GSE21036/metastasis_vs_normal.txt", row.names = F, quote=F, sep="\t")
-write.table(metastasis_vs_tumor[,c(3:9)], "/data/github/pca_network/mirna/GSE21036/metastasis_vs_tumor.txt", row.names = F, quote=F, sep="\t")
-write.table(metastasis_vs_all[,c(3:9)], "/data/github/pca_network/mirna/GSE21036/metastasis_vs_all.txt", row.names = F, quote=F, sep="\t")
-write.table(tumor_vs_all[,c(3:9)], "/data/github/pca_network/mirna/GSE21036/tumor_vs_all.txt", row.names = F, quote=F, sep="\t")
-write.table(normal_vs_all[,c(3:9)], "/data/github/pca_network/mirna/GSE21036/normal_vs_all.txt", row.names = F, quote=F, sep="\t")
+write.table(tumor_vs_normal, "/data/github/pca_network/mirna/GSE21036/tumor_vs_normal.txt", row.names = F, quote=F, sep="\t")
+write.table(metastasis_vs_normal, "/data/github/pca_network/mirna/GSE21036/metastasis_vs_normal.txt", row.names = F, quote=F, sep="\t")
+write.table(metastasis_vs_tumor, "/data/github/pca_network/mirna/GSE21036/metastasis_vs_tumor.txt", row.names = F, quote=F, sep="\t")
+write.table(metastasis_vs_all, "/data/github/pca_network/mirna/GSE21036/metastasis_vs_all.txt", row.names = F, quote=F, sep="\t")
+write.table(tumor_vs_all, "/data/github/pca_network/mirna/GSE21036/tumor_vs_all.txt", row.names = F, quote=F, sep="\t")
+write.table(normal_vs_all, "/data/github/pca_network/mirna/GSE21036/normal_vs_all.txt", row.names = F, quote=F, sep="\t")
