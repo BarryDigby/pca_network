@@ -10,8 +10,8 @@ mirna_query <- GDCquery(project = "TCGA-PRAD",
                         #workflow.type = "BCGSC miRNA Profiling",
                         experimental.strategy = "miRNA-Seq")
 
-GDCdownload(mirna_query, method = "api", files.per.chunk = 100,
-            directory = "~/Desktop/TCGA/miRNA/")
+#GDCdownload(mirna_query, method = "api", files.per.chunk = 100,
+ #           directory = "~/Desktop/TCGA/miRNA/")
 
 miR_df <- GDCprepare(mirna_query, directory = "~/Desktop/TCGA/miRNA/")
 
@@ -102,6 +102,7 @@ fit <- limma::eBayes(limma::contrasts.fit(limma::lmFit(v, design = design), cont
 
 t_v_n = limma::topTable(fit, number=Inf, p.value = 0.05, adjust.method = "BH", coef="t_v_n")
 t_v_n = tibble::rownames_to_column(t_v_n, "miRNA")
+t_v_n$old_id = t_v_n$miRNA
 t_v_n$miRNA = gsub("mir", "miR", t_v_n$miRNA)
 
 # mir IDs seem to be missing 5p , 3p etc etc. Annotated with mirbase aliases to make consistent with other datasets.
@@ -167,10 +168,20 @@ update_id = function(df) {
 library(dplyr)
 library(stringr)
 t_v_n$new_id = update_id(t_v_n)
-t_v_n$miRNA = t_v_n$new_id
-t_v_n = t_v_n[,c(1:7)]
 
+#t_v_n$miRNA = t_v_n$new_id
+#t_v_n = t_v_n[,c(1:7)]
 
+#write.table(t_v_n, "/data/github/pca_network/mirna/TCGA/tumor_v_normal.txt", sep="\t", row.names = F, quote = F)
 
-write.table(t_v_n, "/data/github/pca_network/mirna/TCGA/tumor_v_normal.txt", sep="\t", row.names = F, quote = F)
-
+#export heatmap counts
+mat = logcpm[which(rownames(logcpm) %in% t_v_n$old_id),]
+tumor_v_normal = subset(t_v_n, select=c(old_id, new_id))
+mat = merge(mat, tumor_v_normal, by.x=0, by.y="old_id")
+mat = mat[,2:ncol(mat)]
+mat = mat[,c(ncol(mat),1:(ncol(mat)-1))]
+colnames(mat)[1] = "SystematicName"
+dataGG = subset(dataGG, select=(Status))
+dataGG$Status = ifelse(dataGG$Status=="Primary Tumour", "Tumor", "Normal")
+write.table(mat, "/data/github/pca_network/mirna/TCGA/heatmap_counts.txt", sep="\t", quote=F, row.names = F)
+write.table(dataGG, "/data/github/pca_network/mirna/TCGA/heatmap_meta.txt", sep="\t", quote=F, row.names = F)

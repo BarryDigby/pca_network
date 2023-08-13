@@ -28,3 +28,10 @@ intersection = merge(intersection, avg_circ, by.x="circrna", by.y="circbaseID")
 intersection = intersection[,c(1,4,2,3)]
 intersection = intersection[order(intersection$circrna),]
 write.table(intersection, "/data/github/pca_network/results/circrna_mirna_network.txt", quote=F,  sep="\t", row.names = F)
+
+library(ggvenn)
+pdf("/data/github/pca_network/results/demirna_circtargets.pdf", width=5, height=6)
+ggvenn::ggvenn(list(DEmiRNA=de_mir$miRNA, circRNA_targets=db_mir$mirna),
+               show_percentage = F, set_name_size = 5, fill_color = c("royalblue", "red1"),
+               fill_alpha = 0.5)
+dev.off()

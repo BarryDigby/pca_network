@@ -8,6 +8,11 @@ mirbase = read.table("/data/github/pca_network/data/mirbase.txt", header=F, sep=
 colnames(mirbase) = c("ID", "Target", "Score")
 mirbase = mirbase[,c(1:2)]
 
+#targetscan
+ts = read.csv("/data/github/pca_network/data/targetscan.txt", header=T, sep="\t")
+ts = ts[,c(2,1)]
+colnames(ts) = c("ID", "Target")
+
 # use miRNAs as input to website and download. 
 mirnet = read.csv("/data/github/pca_network/data/mirnet2gene.csv", sep=",", header=T)
 mirnet = mirnet[,c(1,3)]
@@ -22,6 +27,7 @@ colnames(mirtarbase) = c("ID", "Target")
 mirbase = mirbase[which(mirbase$ID %in% mirna_network$mirna),]
 mirnet = mirnet[which(mirnet$ID %in% mirna_network$mirna),]
 mirtarbase = mirtarbase[which(mirtarbase$ID %in% mirna_network$mirna),]
+ts = ts[which(ts$ID %in% mirna_network$mirna),]
 
 #hgnc symbols for miRBase
 mart <- biomaRt::useMart(biomart = "ensembl", dataset = "hsapiens_gene_ensembl")
@@ -35,7 +41,7 @@ mirbase = merge(mirbase, info, by.x="Target", by.y="refseq_mrna", all.x = T)
 mirbase = mirbase[,c(2,3)]
 colnames(mirbase) = c("ID", "Target")
 
-master = rbind(mirbase, mirnet, mirtarbase)
+master = rbind(mirbase, mirnet, mirtarbase, ts)
 master = master %>% unique()
 
 write.table(master, "/data/github/pca_network/results/mirna_mrna_db.txt", sep="\t", row.names = F, quote=F)

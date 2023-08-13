@@ -52,6 +52,7 @@ mart <- useMart(biomart = "ensembl", dataset = "hsapiens_gene_ensembl")
 
 mrna_attributes <- getBM(attributes=c("external_gene_name",
                                       "ensembl_gene_id_version",
+                                      "ensembl_gene_id",
                                       "gene_biotype"),
                          filters = c("ensembl_gene_id_version"),
                          values = rownames(mrna_df),

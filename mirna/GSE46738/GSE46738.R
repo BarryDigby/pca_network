@@ -57,7 +57,7 @@ t_v_n = t_v_n[which(grepl("hsa-", t_v_n$mirna)),]
 # annotate correctly.. 
 
 alias = read.csv("/data/github/pca_network/data/mirbase_aliases_tabbed.txt", sep="\t", header=F)
-
+t_v_n$old_id = t_v_n$mirna
 t_v_n$mirna = gsub("_st", "", t_v_n$mirna)
 t_v_n$mirna = gsub("-star", "\\*", t_v_n$mirna)
 
@@ -121,8 +121,19 @@ library(dplyr)
 library(stringr)
 t_v_n$new_id = update_id(t_v_n)
 
-t_v_n$mirna = t_v_n$new_id
-colnames(t_v_n)[1] = "miRNA"
-t_v_n = t_v_n[,c(1:7)]
+#t_v_n$mirna = t_v_n$new_id
+#colnames(t_v_n)[1] = "miRNA"
+#t_v_n = t_v_n[,c(1:7)]
 write.table(t_v_n, "/data/github/pca_network/mirna/GSE46738/tumor_vs_normal.txt", quote=F, sep="\t", row.names = F)
 
+# export heatmap.
+mat = ex[which(rownames(ex) %in% t_v_n$old_id),]
+tumor_v_normal = subset(t_v_n, select=c(old_id, new_id))
+mat = merge(mat, tumor_v_normal, by.x=0, by.y="old_id")
+mat = mat[,2:ncol(mat)]
+mat = mat[,c(ncol(mat),1:(ncol(mat)-1))]
+colnames(mat)[1] = "SystematicName"
+dataGG = subset(dataGG, select=(Status))
+#dataGG$Status = ifelse(dataGG$Status=="PCa", "Tumor", "Normal")
+write.table(mat, "/data/github/pca_network/mirna/GSE46738/heatmap_counts.txt", sep="\t", quote=F, row.names = F)
+write.table(dataGG, "/data/github/pca_network/mirna/GSE46738/heatmap_meta.txt", sep="\t", quote=F, row.names = F)

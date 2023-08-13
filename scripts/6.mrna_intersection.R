@@ -13,9 +13,9 @@ TCGA = read.csv("/data/github/pca_network/mrna/TCGA/tumor_vs_normal.txt", sep="\
 # rearrange DFs for merge: gene + basic limma info.
 LNCAP_clone1$experiment = "LNCaP_clone1"
 LNCAP_clone9$experiment = "LNCaP_clone9"
-GSE88752_primary = GSE88752_primary[,c(9,2:7)]
-colnames(GSE88752_primary)[1] = "Gene"
-GSE88752_primary$experiment = "GSE88752_primary"
+#GSE88752_primary = GSE88752_primary[,c(9,2:7)]
+#colnames(GSE88752_primary)[1] = "Gene"
+#GSE88752_primary$experiment = "GSE88752_primary"
 GSE88752_secondary = GSE88752_secondary[,c(9,2:7)]
 colnames(GSE88752_secondary)[1] = "Gene"
 GSE88752_secondary$experiment = "GSE88752_secondary"
@@ -33,7 +33,8 @@ GSE78201_6MO$experiment = "GSE78201_6MO"
 TCGA$experiment = "TCGA"
 
 # intersect (n exp groups -1 ) for groupby()
-intersection = rbind(LNCAP_clone1, LNCAP_clone9, GSE88752_primary, GSE88752_secondary, GSE143408_day7, GSE143408_day14, GSE143408_day21, GSE78201_6MO, TCGA)
+# Remove Primary treatment - this is catration but no enzalutamide.
+intersection = rbind(LNCAP_clone1, LNCAP_clone9, GSE88752_secondary, GSE143408_day7, GSE143408_day14, GSE143408_day21, GSE78201_6MO, TCGA)
 # must be in TCGA, Clone1 and validated in one other enz resistance dataset.
 intersection = intersection %>% group_by(Gene) %>% filter(length(unique(experiment))>=3 & 'LNCaP_clone1' %in% experiment & 'TCGA' %in% experiment) %>% ungroup()
 intersection = intersection %>% group_by(Gene) %>% filter(all(logFC>0) | all(logFC<0)) %>% ungroup()

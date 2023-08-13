@@ -10,6 +10,13 @@ mir_db = read.csv("/data/github/pca_network/results/mirna_mrna_db.txt", header=T
 # mrna intersection enz resistance signatures
 de_mrna = read.csv("/data/github/pca_network/results/mrna_intersection.txt", header=T, sep="\t")
 
+library(ggvenn)
+pdf("/data/github/pca_network/results/demrna_mirnatargets.pdf", width=5, height=6)
+ggvenn::ggvenn(list(DEmRNA = unique(de_mrna$Gene), miRNA_targets = unique(mir_db$Target)),
+               show_percentage = F, set_name_size = 5, fill_color = c("royalblue", "red1"),
+               fill_alpha = 0.5)
+dev.off()
+
 # intersect DE genes with predicted DB genes
 intersection = Reduce(intersect, list(de_mrna$Gene, mir_db$Target))
 

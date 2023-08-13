@@ -184,3 +184,16 @@ write.table(metastasis_vs_tumor, "/data/github/pca_network/mirna/GSE21036/metast
 write.table(metastasis_vs_all, "/data/github/pca_network/mirna/GSE21036/metastasis_vs_all.txt", row.names = F, quote=F, sep="\t")
 write.table(tumor_vs_all, "/data/github/pca_network/mirna/GSE21036/tumor_vs_all.txt", row.names = F, quote=F, sep="\t")
 write.table(normal_vs_all, "/data/github/pca_network/mirna/GSE21036/normal_vs_all.txt", row.names = F, quote=F, sep="\t")
+
+# export count matrix for heatmaps
+# we only want tumor and normal samples.. 
+t_v_n = yfilt$E[which(rownames(yfilt$E) %in% rownames(tumor_vs_normal)),]
+samples = dataGG[which(dataGG$Status!="Metastasis"),]
+t_v_n = t_v_n[,which(colnames(t_v_n) %in% rownames(samples))]
+tumor_vs_normal = subset(tumor_vs_normal, select=(SystematicName))
+t_v_n = merge(t_v_n, tumor_vs_normal, by=0)
+t_v_n = t_v_n[,2:ncol(t_v_n)]
+t_v_n = t_v_n[,c(ncol(t_v_n),1:(ncol(t_v_n)-1))]
+write.table(t_v_n, "/data/github/pca_network/mirna/GSE21036/heatmap_counts.txt", sep="\t", quote=F, row.names = F)
+samples = subset(samples, select=(Status))
+write.table(samples, "/data/github/pca_network/mirna/GSE21036/heatmap_meta.txt", sep="\t", quote=F, row.names = F)

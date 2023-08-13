@@ -67,3 +67,12 @@ ggpubr::ggscatter(dataGG, x="PC1", y="PC2", shape = "Batch",
   theme(legend.position = "right") +
   theme(plot.title = element_text(hjust = 0.5, face = "bold"))
 dev.off()
+
+# export heatmap counts . . 
+mirs = unique(Clone1$miRNA, Clone9$miRNA)
+mat = logcpm[which(rownames(logcpm) %in% mirs),]
+mat = tibble::rowid_to_column(mat, "SystematicName")
+dataGG = subset(dataGG, select=(Group))
+colnames(dataGG)[1] = "Status"
+write.table(mat, "/data/github/pca_network/mirna/LNCaP/heatmap_counts.txt", sep="\t", quote=F, row.names = F)
+write.table(dataGG, "/data/github/pca_network/mirna/LNCaP/heatmap_meta.txt", sep="\t", quote=F, row.names = F)

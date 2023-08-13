@@ -141,7 +141,19 @@ ann_res = function(df){
 
 hsa_tt = ann_res(hsa_tt)
 
-
 write.table(hsa_tt, "/data/github/pca_network/mirna/GSE36803/PCA_vs_Benign.txt", row.names = F, quote=F, sep="\t")
 
-
+# export count matrix for heatmaps
+# revert probes back to original naming convention: (undo prior code.. )
+hsa_tt$miRNA = paste(hsa_tt$miRNA, "_st", sep="")
+hsa_tt$miRNA = gsub("\\*", "-star", hsa_tt$miRNA)
+# correctly gets original 128
+t_v_n = exp[which(rownames(exp) %in% hsa_tt$miRNA),]
+tumor_v_normal = subset(hsa_tt, select=c(miRNA, new_id))
+t_v_n = merge(t_v_n, tumor_v_normal, by.x=0, by.y="miRNA")
+t_v_n = t_v_n[,2:ncol(t_v_n)]
+t_v_n = t_v_n[,c(ncol(t_v_n),1:(ncol(t_v_n)-1))]
+colnames(t_v_n)[1] = "SystematicName"
+write.table(t_v_n, "/data/github/pca_network/mirna/GSE36803/heatmap_counts.txt", sep="\t", quote=F, row.names = F)
+dataGG = subset(dataGG, select=(Status))
+write.table(dataGG, "/data/github/pca_network/mirna/GSE36803/heatmap_meta.txt", sep="\t", quote=F, row.names = F)

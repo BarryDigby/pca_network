@@ -28,3 +28,9 @@ intersection = intersection %>% group_by(miRNA) %>% filter(length(unique(experim
 intersection = intersection %>% group_by(miRNA) %>% filter(all(logFC>0) | all(logFC<0)) %>% ungroup()
 
 write.table(intersection, "/data/github/pca_network/results/mirna_intersection.txt", sep="\t", row.names = FALSE, quote = FALSE)
+
+library(ggvenn)
+pdf("/data/github/pca_network/results/mirna_intersection.pdf", width=7, height=6)
+ggvenn::ggvenn(list(GSE21036=GSE21036$miRNA, GSE23022=GSE23022$miRNA, GSE36803=GSE36803$miRNA, GSE45604=GSE45604$miRNA, GSE46738=GSE46738$miRNA, TCGA=TCGA$miRNA),
+               show_percentage = F, set_name_size = 5)
+dev.off()
