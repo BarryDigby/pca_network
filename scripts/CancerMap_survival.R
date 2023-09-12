@@ -6,44 +6,38 @@ meta = cmap@phenoData@data
 
 # remove normal samples from dataset
 meta = meta[which(meta$sample_type!="Normal"),]
+meta$days_to_follow_up = meta$time_to_bcr * 30.44
 mat = mat[,which(colnames(mat) %in% rownames(meta))]
 
-# data is normalised, on log2 scale
-boxplot(mat[,1:20])
-
-load("/data/github/pca_network/results/LASSO_cox.RData")
-load("/data/github/pca_network/results/TCGA_survival.RData")
-
-signf = signf_os[which(signf_os$gene %in% Active.Genes),]
-
-mat = mat[which(rownames(mat) %in% signf$ensembl),]
-signf = subset(signf, select=c(gene, ensembl))
-mat = merge(mat, signf, by.x=0, by.y="ensembl")
-mat = tibble::column_to_rownames(mat, "gene")
+#load("/data/github/pca_network/results/prognostic_model_os2.RData")
+mrna_attributes = read.csv("/data/github/pca_network/results/TCGA_mrna_attributes.txt", header=T, sep="\t")
+mrna_attributes = mrna_attributes[which(mrna_attributes$external_gene_name %in% Active.Genes),]
+mat = merge(mat, mrna_attributes[,c(1,3)], by.x=0, by.y="ensembl_gene_id")
+mat = tibble::column_to_rownames(mat, "external_gene_name")
 mat = mat[,2:ncol(mat)]
-
-mat = as.data.frame(t(scale(t(mat), scale = T, center = T)))
-boxplot(mat[,1:20])
-
 mat = as.data.frame(t(mat))
 
-risk = rowSums(Active.Coefficients*mat)
+mat = as.data.frame(scale(mat, scale = T, center = T))
+
+risk = rowSums(mat*Active.Coefficients)
 mat$risk_score = risk
-sub_meta = subset(meta, select=c(time_to_bcr, bcr_status))
-mat = cbind(mat, sub_meta)
-mat$days_to_bcr = mat$time_to_bcr * 30.44
-mat$risk_score_cat = ifelse(mat$risk_score > median(mat$risk_score), "high", "low")
+mat$risk_category = ifelse(mat$risk_score > median(mat$risk_score), "high", "low")
+mat = cbind(mat, subset(meta, select=c(days_to_follow_up, bcr_status)))
 
-surv_object <- Surv(mat$days_to_bcr, mat$bcr_status)
-res2 = survfit(surv_object ~ risk_score_cat, data=mat)
+surv_object <- Surv(mat$days_to_follow_up, mat$bcr_status)
+cox = coxph(surv_object ~ risk_category, data=mat)
+res = survfit(surv_object ~ risk_category, data=mat)
+logrank = survdiff(surv_object ~ risk_category, data=mat)
 
-ggsurvplot(res2,
-           pval = TRUE, conf.int = T,
+#pdf("/data/github/pca_network/results/TCGA_DFS/CPC_DFS.pdf", height=8,width=8)
+ggsurvplot(res,
+           pval = TRUE, conf.int = F,
            risk.table = T, # Add risk table
            #risk.table.col = "strata", # Change risk table color by groups
            linetype = "strata", # Change line type by groups
-           surv.median.line = "hv", # Specify median survival
+           surv.median.line = "none", # Specify median survival
            #ggtheme = theme_bw(), # Change ggplot2 theme
            palette = c("red1", "royalblue3"),
            data=mat,
            xlab="Time (days)")
+#dev.off()

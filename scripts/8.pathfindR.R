@@ -28,6 +28,14 @@ kegg     = read.csv("/data/github/pca_network/results/kegg.txt", header=T, sep="
 go       = read.csv("/data/github/pca_network/results/go.txt", header=T, sep="\t")
 reactome = read.csv("/data/github/pca_network/results/reactome.txt", header=T, sep="\t")
 
+melt = rbind(go,kegg,reactome)
+melt = melt[which(melt$occurrence>50),]
+
+# network plot for manuscript
+pdf("/data/github/pca_network/results/pathfindR/network.pdf", width=22, height=16)
+melt = cluster_enriched_terms(melt, plot_clusters_graph = T, use_description = T, use_active_snw_genes = T, vertex.label.cex=1, vertex.size.scaling=1.5)
+dev.off()
+
 
 # GO pathways
 go = go[which(go$occurrence > 50),]
@@ -41,6 +49,9 @@ for(i in 1:nrow(go_clst)){
 go_clst$size = save
 
 go_clst = go_clst[order(-go_clst$Fold_Enrichment),]
+
+# plot top 10
+go_clst = go_clst[1:10,]
 
 ggplot(go_clst, aes(y=Term_Description,x=Fold_Enrichment)) +
   geom_point(aes(color=lowest_p,size=size)) +
@@ -63,34 +74,33 @@ tdat2 <- go_clst %>%
   # 2. Arrange by
   #   i.  facet group (tissue)
   #   ii. value (score)
-  arrange(Cluster, Fold_Enrichment) %>%
+  arrange(Fold_Enrichment, Term_Description) %>%
   # 3. Add order column of row numbers
   mutate(order = row_number())
 
-tdat2$Cluster = as.factor(tdat2$Cluster)
+# # tweak names for plot
+# tdat2[1,]$Term_Description = "DNA-binding transcription activator activity,\n RNA polymerase II-specific"
+# tdat2[4,]$Term_Description = "DNA-binding transcription factor activity,\n RNA polymerase II-specific"
+# tdat2[9,]$Term_Description = "SCF-dependent proteasomal ubiquitin-dependent\n protein catabolic process"
 
-# tweak names for plot
-tdat2[1,]$Term_Description = "DNA-binding transcription activator activity,\n RNA polymerase II-specific"
-tdat2[4,]$Term_Description = "DNA-binding transcription factor activity,\n RNA polymerase II-specific"
-tdat2[9,]$Term_Description = "SCF-dependent proteasomal ubiquitin-dependent\n protein catabolic process"
-
-pdf("/data/github/pca_network/results/pathfindR/go.pdf", width=10, height=10)
+pdf("/data/github/pca_network/results/pathfindR/go_top10.pdf", width=7, height=5)
 ggplot(tdat2, aes(order, Fold_Enrichment)) +
-  geom_point(aes(colour = lowest_p, size=size)) +
+  geom_point(aes(colour = lowest_p, size=size)) + 
   scale_x_continuous(
     breaks = tdat2$order,
     labels = tdat2$Term_Description,
     expand = c(0,0.5)) +
   # toggle 'expand' to pad axes, make room for points
-  scale_y_continuous(expand = c(0.05, 0.5)) +
-  facet_grid(Cluster ~ ., scales = "free_y", space = "free", drop = TRUE) +
+  scale_y_continuous(expand = c(0, 0.35)) +
+  #facet_grid(Cluster ~ ., scales = "free_y", space = "free", drop = TRUE) +
   coord_flip() +
   labs( title = "GO Pathways",
+        subtitle = NULL,
         x=NULL, y="Fold Enrichment",
         color='P-value',size='Gene\nnumber'
   ) + 
   scale_color_gradientn(colours = rocket(100, begin = 0, end = 0.5, alpha = 0.8, direction = -1)) +
-  theme_linedraw() + scale_size(range = c(2,7))
+  theme_linedraw() + scale_size(range = c(2,7)) + theme(axis.text.y = element_text(face="bold"))
 dev.off()
 
 
@@ -106,7 +116,7 @@ for(i in 1:nrow(kegg_clst)){
 kegg_clst$size = save
 
 kegg_clst = kegg_clst[order(-kegg_clst$Fold_Enrichment),]
-
+kegg_clst = kegg_clst[1:10,]
 ggplot(kegg_clst, aes(y=Term_Description,x=Fold_Enrichment)) +
   geom_point(aes(color=lowest_p,size=size)) +
   scale_color_gradientn(colours = rocket(100, begin = 0, end = 0.5, alpha = 0.8, direction = -1)) +
@@ -128,13 +138,15 @@ tdat2 <- kegg_clst %>%
   # 2. Arrange by
   #   i.  facet group (tissue)
   #   ii. value (score)
-  arrange(Cluster, Fold_Enrichment) %>%
+  arrange(Fold_Enrichment, Term_Description) %>%
   # 3. Add order column of row numbers
   mutate(order = row_number())
 
 tdat2$Cluster = as.factor(tdat2$Cluster)
-  
-pdf("/data/github/pca_network/results/pathfindR/kegg.pdf", width=9.5, height=10)
+
+tdat2$order = rev(tdat2$order)
+
+pdf("/data/github/pca_network/results/pathfindR/kegg_top10.pdf", width=8, height=4)
 ggplot(tdat2, aes(order, Fold_Enrichment)) +
   geom_point(aes(colour = lowest_p, size=size)) + 
   scale_x_continuous(
@@ -143,15 +155,15 @@ ggplot(tdat2, aes(order, Fold_Enrichment)) +
     expand = c(0,0.5)) +
   # toggle 'expand' to pad axes, make room for points
   scale_y_continuous(expand = c(0, 0.2)) +
-  facet_grid(Cluster ~ ., scales = "free_y", space = "free", drop = TRUE) +
-  coord_flip() +
-  labs( title = "PathfindR KEGG Pathways",
+  #facet_grid(Cluster ~ ., scales = "free_y", space = "free", drop = TRUE) +
+  #coord_flip() +
+  labs( title = "KEGG Pathways",
         subtitle = NULL,
         x=NULL, y="Fold Enrichment",
         color='P-value',size='Gene\nnumber'
   ) + 
   scale_color_gradientn(colours = rocket(100, begin = 0, end = 0.5, alpha = 0.8, direction = -1)) +
-  theme_linedraw() + scale_size(range = c(3,6))
+  theme_linedraw() + scale_size(range = c(4,6)) + theme(axis.text.x = element_text(angle=45, vjust = 1, hjust=1, face="bold"))
 dev.off()
 
 # REACTOME
@@ -166,6 +178,7 @@ for(i in 1:nrow(reactome_clst)){
 reactome_clst$size = save
 
 reactome_clst = reactome_clst[order(-reactome_clst$Fold_Enrichment),]
+reactome_clst = reactome_clst[1:10,]
 
 ggplot(reactome_clst, aes(y=Term_Description,x=Fold_Enrichment)) +
   geom_point(aes(color=lowest_p,size=size)) +
@@ -188,13 +201,13 @@ tdat2 <- reactome_clst %>%
   # 2. Arrange by
   #   i.  facet group (tissue)
   #   ii. value (score)
-  arrange(Cluster, Fold_Enrichment) %>%
+  arrange(Fold_Enrichment, Term_Description) %>%
   # 3. Add order column of row numbers
   mutate(order = row_number())
 
 tdat2$Cluster = as.factor(tdat2$Cluster)
 
-pdf("/data/github/pca_network/results/pathfindR/reactome.pdf", width=10, height=18)
+pdf("/data/github/pca_network/results/pathfindR/reactome_top10.pdf", width=7, height=5)
 ggplot(tdat2, aes(order, Fold_Enrichment)) +
   geom_point(aes(colour = lowest_p, size=size)) + 
   scale_x_continuous(
@@ -203,7 +216,7 @@ ggplot(tdat2, aes(order, Fold_Enrichment)) +
     expand = c(0,0.8)) +
   # toggle 'expand' to pad axes, make room for points
   scale_y_continuous(expand = c(0, 0.5)) +
-  facet_grid(Cluster ~ ., scales = "free_y", space = "free", drop = TRUE) +
+  #facet_grid(Cluster ~ ., scales = "free_y", space = "free", drop = TRUE) +
   coord_flip() +
   labs( title = "Reactome Pathways",
         subtitle = NULL,
@@ -211,7 +224,7 @@ ggplot(tdat2, aes(order, Fold_Enrichment)) +
         color='P-value',size='Gene\nnumber'
   ) + 
   scale_color_gradientn(colours = rocket(100, begin = 0, end = 0.5, alpha = 0.8, direction = -1)) +
-  theme_linedraw() + scale_size(range = c(1,6))
+  theme_linedraw() + scale_size(range = c(3,6)) + theme(axis.text.y = element_text(face="bold"))
 dev.off()
 
 

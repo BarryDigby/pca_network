@@ -1,5 +1,8 @@
 #!/usr/bin/env Rscript
 
+library(survival)
+library(survminer)
+
 # data is processed GSE107299
 cpc = readRDS("/data/github/pca_network/data/CPC-Gene_eSet.RDS")
 mat = cpc@assayData$exprs
@@ -8,8 +11,10 @@ meta = meta[which(!is.na(meta$bcr_status)),]
 mat = as.data.frame(mat[,meta$sample_id])
 meta$days_to_follow_up = floor(meta$time_to_bcr*30.44)
 
-load("/data/github/pca_network/results/prognostic_model_os.RData")
+# DFS model results
 
+
+#load("/data/github/pca_network/results/prognostic_model_os2.RData")
 mrna_attributes = read.csv("/data/github/pca_network/results/TCGA_mrna_attributes.txt", header=T, sep="\t")
 mrna_attributes = mrna_attributes[which(mrna_attributes$external_gene_name %in% Active.Genes),]
 mat = merge(mat, mrna_attributes[,c(1,3)], by.x=0, by.y="ensembl_gene_id")
@@ -29,7 +34,7 @@ cox = coxph(surv_object ~ risk_category, data=mat)
 res = survfit(surv_object ~ risk_category, data=mat)
 logrank = survdiff(surv_object ~ risk_category, data=mat)
 
-pdf("/data/github/pca_network/results/TCGA_DFS/CPC_DFS.pdf", height=8,width=8)
+#pdf("/data/github/pca_network/results/TCGA_DFS/CPC_DFS.pdf", height=8,width=8)
 ggsurvplot(res,
            pval = TRUE, conf.int = F,
            risk.table = T, # Add risk table
@@ -40,7 +45,5 @@ ggsurvplot(res,
            palette = c("red1", "royalblue3"),
            data=mat,
            xlab="Time (days)")
-dev.off()
+#dev.off()
 
-x = survfit(Surv(days_to_follow_up, bcr_status) ~ CCDC14, data=mat)
-summary(x)

@@ -16,6 +16,13 @@ GDCdownload(mrna_query, method = "api", files.per.chunk = 100,
 
 mrna_df <- GDCprepare(mrna_query, directory = "~/Desktop/TCGA/mRNA/")
 
+# metadata full
+list_columns <- sapply(mrna_df@colData@listData, is.list)
+# Step 2: Exclude list columns from the data
+mrna_df@colData@listData <- mrna_df@colData@listData[!list_columns]
+# Step 3: Convert the modified data to a dataframe
+colData_df <- as.data.frame(mrna_df@colData@listData)
+
 mrna_meta <- mrna_df$sample
 mrna_meta <- cbind(mrna_meta, mrna_df$definition)
 mrna_df <- assay(mrna_df)
@@ -75,7 +82,6 @@ y <- edgeR::calcNormFactors(y)
 logcpm <- edgeR::cpm(y, normalized.lib.sizes = T, log=TRUE)
 scaled <- t(scale(t(logcpm)))
 v <- limma::voom(y, design, plot = F)
-
 
 
 PCA <- prcomp(t(scaled), scale = F)

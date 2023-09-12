@@ -1,6 +1,5 @@
 #!/usr/bin/env Rscript 
 
-
 library(dplyr)
 library(tidyr)
 library(survminer)
@@ -38,7 +37,7 @@ atlas_meta$status = ifelse(atlas_meta$vital=="Dead", 1, 0)
 # order correctly (FPKM)
 # FPKM matrix now ready for expression plots
 #########################################################################
-load("/data/github/pca_network/results/prognostic_model_os.RData")
+load("/data/github/pca_network/results/prognostic_model_os2.RData")
 ensv109 = read.csv("/data/github/pca_network/data/ensembl_v109_proteinatlas.csv", sep="\t", header = F)
 colnames(ensv109) = c("ensembl_gene_id", "biotype", "hgnc_symbol")
 ensv109 = ensv109[which(ensv109$hgnc_symbol %in% Active.Genes),]
@@ -98,7 +97,7 @@ cox = coxph(surv_object ~ risk_category, data=dfs_mat)
 res = survfit(surv_object ~ risk_category, data=dfs_mat)
 logrank = survdiff(surv_object ~ risk_category, data=dfs_mat)
 
-pdf("/data/github/pca_network/results/TCGA_DFS/Risk_category_scaled_DFS.pdf", height=8,width=8)
+pdf("/data/github/pca_network/results/TCGA_DFS2/Risk_category_scaled_DFS.pdf", height=8,width=8)
 ggsurvplot(res,
            pval = TRUE, conf.int = F,
            risk.table = T, # Add risk table
@@ -161,7 +160,7 @@ for(i in 1:nrow(signf_dfs)){
   
   p$sp <- p$sp + geom_vline(xintercept = best_thresh[1,1], linetype = "dashed", color = "black")
   
-  pdf(paste0("/data/github/pca_network/results/TCGA_DFS/",gene,"_fpkm_scatter.pdf"), height=5, width=8)
+  pdf(paste0("/data/github/pca_network/results/TCGA_DFS2/",gene,"_fpkm_scatter.pdf"), height=5, width=8)
   print(p)
   dev.off()
 }
@@ -190,7 +189,7 @@ for(i in 1:nrow(signf_dfs)){
                   palette = c("red1", "royalblue3"),
                   data=mat, xlab="Time (days)",ylab="Disease free survival probability")
   
-  pdf(paste0("/data/github/pca_network/results/TCGA_DFS/",gene,"_fpkm_bcr.pdf"), height=5, width=7)
+  pdf(paste0("/data/github/pca_network/results/TCGA_DFS2/",gene,"_fpkm_bcr.pdf"), height=5, width=7)
   print(p)
   dev.off()
 }
@@ -218,7 +217,7 @@ for(i in 1:nrow(signf_dfs)){
                   palette = c("red1", "royalblue3"),
                   data=mat, xlab="Time (days)",ylab="Disease free survival probability")
   
-  pdf(paste0("/data/github/pca_network/results/TCGA_DFS/",gene,"_scaled_bcr.pdf"), height=5, width=7)
+  pdf(paste0("/data/github/pca_network/results/TCGA_DFS2/",gene,"_scaled_bcr.pdf"), height=5, width=7)
   print(p)
   dev.off()
 }

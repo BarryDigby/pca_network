@@ -36,7 +36,7 @@ atlas_meta$status = ifelse(atlas_meta$vital=="Dead", 1, 0)
 # order correctly (FPKM)
 # FPKM matrix now ready for expression plots
 #########################################################################
-load("/data/github/pca_network/results/prognostic_model.RData")
+load("/data/github/pca_network/results/prognostic_model_os2.RData")
 ensv109 = read.csv("/data/github/pca_network/data/ensembl_v109_proteinatlas.csv", sep="\t", header = F)
 colnames(ensv109) = c("ensembl_gene_id", "biotype", "hgnc_symbol")
 ensv109 = ensv109[which(ensv109$hgnc_symbol %in% Active.Genes),]
@@ -80,7 +80,7 @@ cox = coxph(surv_object ~ risk_category, data=os_mat)
 res = survfit(surv_object ~ risk_category, data=os_mat)
 logrank = survdiff(surv_object ~ risk_category, data=os_mat)
 
-#pdf("/data/github/pca_network/results/TCGA_OS/Risk_category_scaled_OS.pdf", height=8,width=8)
+pdf("/data/github/pca_network/results/TCGA_OS2/Risk_category_scaled_OS.pdf", height=8,width=8)
 ggsurvplot(res,
            pval = TRUE, conf.int = F,
            risk.table = T, # Add risk table
@@ -118,7 +118,7 @@ for(i in 1:nrow(signf_os)){
   
     p$sp <- p$sp + geom_vline(xintercept = opt, linetype = "dashed", color = "black")
     
-    pdf(paste0("/data/github/pca_network/results/TCGA_OS/",gene,"_fpkm_scatter.pdf"), height=5, width=8)
+    pdf(paste0("/data/github/pca_network/results/TCGA_OS2/",gene,"_fpkm_scatter.pdf"), height=5, width=8)
     print(p)
     dev.off()
 }
@@ -149,7 +149,7 @@ for(i in 1:nrow(signf_os)){
                   palette = c("red1", "royalblue3"),
                   data=mat, xlab="Time (days)")
   
-  pdf(paste0("/data/github/pca_network/results/TCGA_OS/",gene,"_fpkm_survival.pdf"), height=5, width=7)
+  pdf(paste0("/data/github/pca_network/results/TCGA_OS2/",gene,"_fpkm_survival.pdf"), height=5, width=7)
   print(p)
   dev.off()
 }
@@ -182,7 +182,7 @@ for(i in 1:nrow(signf_os)){
                   palette = c("red1", "royalblue3"),
                   data=mat, xlab="Time (days)")
   
-  pdf(paste0("/data/github/pca_network/results/TCGA_OS/",gene,"_scaled_survival.pdf"), height=5, width=7)
+  pdf(paste0("/data/github/pca_network/results/TCGA_OS2/",gene,"_scaled_survival.pdf"), height=5, width=7)
   print(p)
   dev.off()
 }
@@ -192,7 +192,7 @@ for(i in 1:nrow(signf_os)){
 # ROC curve RISK ~ OS
 #########################################################################
 scaled_risk_roc = roc(os_mat$status, os_mat$risk_score)
-pdf("/data/github/pca_network/results/TCGA_OS/ROC_scaled_risk_score.pdf", width = 8, height = 8)
+pdf("/data/github/pca_network/results/TCGA_OS2/ROC_scaled_risk_score.pdf", width = 8, height = 8)
 pROC::plot.roc(scaled_risk_roc, col="red", xlim = c(0.9,0.1), add = F)
 legend("bottomright", legend = paste("AUC = ", round(scaled_risk_roc$auc, 3)))
 dev.off()
@@ -200,6 +200,26 @@ dev.off()
 #########################################################################
 # ROC curve 1,3,5,10 years RISK ~ OS
 #########################################################################
+
+os_mat$risk_category = as.numeric(os_mat$risk_category)
+ROC.train <- timeROC(T=os_mat$days_to_follow_up,
+                     delta=os_mat$status,
+                     marker=os_mat$risk_category,
+                     cause=1,weighting="marginal",
+                     times=c(365, floor(365*3), floor(365*5), floor(365*10)),
+                     iid=TRUE)
+ROC.train
+confint(ROC.train, level = 0.95)
+pdf("/data/github/pca_network/results/TCGA_OS2/TimeROC.pdf")
+plot(ROC.train, time=365)
+plot(ROC.train, time=365*3)
+plot(ROC.train, time=365*5)
+plot(ROC.train, time=365*10)
+dev.off()
+
+
+
+
 nobs <- length(os_mat$risk_score)
 roc <- survivalROC(Stime=os_mat$days_to_follow_up,
                    status=os_mat$status,
@@ -229,7 +249,7 @@ roc4 <- survivalROC(Stime=os_mat$days_to_follow_up,
                     predict.time = 365*10,
                     span = 0.25*nobs^(-0.20)) 
 
-pdf("/data/github/pca_network/results/TCGA_OS/ROC_10year_scaled_status-risk_score.pdf", width=8, height = 8)
+pdf("/data/github/pca_network/results/TCGA_OS2/ROC_10year_scaled_status-risk_score.pdf", width=8, height = 8)
 plot(roc$FP, roc$TP, type="l", lwd=3, col=alpha("royalblue",0.7), xlim=c(0,1), ylim=c(0,1),
      xlab=paste( "FP"),
      ylab="TP")
@@ -251,14 +271,14 @@ os_mat$patients_inc_risk = seq(1,nrow(os_mat),1)
 os_mat$status = factor(os_mat$status)
 os_mat$years = atlas_meta$years_to_follow_up
 
-pdf("/data/github/pca_network/results/TCGA_OS/Scatter_risk_category.pdf", width = 8, height = 4)
+pdf("/data/github/pca_network/results/TCGA_OS2/Scatter_risk_category.pdf", width = 8, height = 4)
 ggscatter(os_mat, y="risk_score", x="patients_inc_risk", color="risk_category", fill="risk_category", 
                   ylab="Risk Score", xlab = NULL, palette = c("red","royalblue3"), ggtheme = theme_bw(), size = 1) + 
   geom_vline(xintercept = mean(os_mat$patients_inc_risk), linetype = "dashed", color = "grey10" ) + 
   geom_hline(yintercept = mean(os_mat$risk_score), linetype="dashed", color="grey10")
 dev.off()
 
-pdf("/data/github/pca_network/results/TCGA_OS/Scatter_risk_category_years.pdf", width = 8, height = 4)
+pdf("/data/github/pca_network/results/TCGA_OS2/Scatter_risk_category_years.pdf", width = 8, height = 4)
 ggpubr::ggscatter(os_mat %>% dplyr::arrange(status), x="patients_inc_risk", y="years", shape="status", ylab = "Time (years)",
                   color="status", fill="status", palette = c("royalblue3","red"), ggtheme = theme_bw()) + 
   geom_vline(xintercept = mean(os_mat$patients_inc_risk), linetype = "dashed", color = "grey10" )
@@ -271,7 +291,7 @@ ann_col = data.frame(row.names = rownames(os_mat),
 col <- c("red", "royalblue3")
 names(col) <- c("high", "low")
 ann_clr <- list(Group = col)
-pdf("/data/github/pca_network/results/TCGA_OS/lasso_genes_heatmap.pdf", height = 4, width = 8)
+pdf("/data/github/pca_network/results/TCGA_OS2/lasso_genes_heatmap.pdf", height = 4, width = 8)
 p = pheatmap::pheatmap(t(os_mat[,1:9]), labels_col = FALSE, color = col_palette, cluster_cols = F, 
                    scale = "column", annotation_col = ann_col, annotation_colors = ann_clr)
 print(p)

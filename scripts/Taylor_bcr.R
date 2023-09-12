@@ -4,10 +4,11 @@ taylor = readRDS("/data/github/pca_network/data/Taylor_eSet.RDS")
 mat = taylor@assayData$exprs
 meta = taylor@phenoData@data
 meta = meta[which(!is.na(meta$bcr_status)),]
+meta = meta[which(meta$sample_type!="Metastasis"),]
 mat = as.data.frame(mat[,rownames(meta)])
 meta$days_to_follow_up = floor(meta$time_to_bcr*30.44)
 
-load("/data/github/pca_network/results/prognostic_model_os.RData")
+#load("/data/github/pca_network/results/prognostic_model_os.RData")
 
 mrna_attributes = read.csv("/data/github/pca_network/results/TCGA_mrna_attributes.txt", header=T, sep="\t")
 mrna_attributes = mrna_attributes[which(mrna_attributes$external_gene_name %in% Active.Genes),]
@@ -16,7 +17,7 @@ mat = tibble::column_to_rownames(mat, "external_gene_name")
 mat = mat[,2:ncol(mat)]
 mat = as.data.frame(t(mat))
 
-#mat = as.data.frame(scale(mat, scale = F, center = T))
+mat = as.data.frame(scale(mat, scale = F, center = T))
 
 risk = rowSums(mat*Active.Coefficients)
 mat$risk_score = risk
@@ -28,7 +29,7 @@ cox = coxph(surv_object ~ risk_category, data=mat)
 res = survfit(surv_object ~ risk_category, data=mat)
 logrank = survdiff(surv_object ~ risk_category, data=mat)
 
-pdf("/data/github/pca_network/results/TCGA_DFS/Taylor_DFS.pdf", height=8,width=8)
+#pdf("/data/github/pca_network/results/TCGA_DFS/Taylor_DFS.pdf", height=8,width=8)
 ggsurvplot(res,
            pval = TRUE, conf.int = F,
            risk.table = T, # Add risk table
@@ -39,4 +40,4 @@ ggsurvplot(res,
            palette = c("red1", "royalblue3"),
            data=mat,
            xlab="Time (days)")
-dev.off()
+#dev.off()
