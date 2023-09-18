@@ -1,7 +1,6 @@
-results/old_res
+results/old_res/
 results/TCGA_mrna_scaled.txt
 results/TCGA_mrna_logcpm.txt
-results/TCGA_survival.RData
 .git/objects/pack/pack-a4e36887c6782342850553f7cad005b4976e6e36.pack
 .git/objects/pack/tmp_pack_E4e8eQ
 .git/objects/pack/pack-f60df9daaa57de16c9eeeb2fc589b580f95e4b41.pack
