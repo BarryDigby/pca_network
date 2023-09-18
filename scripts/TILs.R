@@ -1,6 +1,5 @@
 #!/usr/bin/env Rscript 
 
-load("/data/github/pca_network/results/TCGA_DFS/model.RData")
 library(msigdbr)
 library(GSVA)
 library(ggpubr)
@@ -9,6 +8,9 @@ library(pheatmap)
 library(data.table)
 library(tidyr)
 library(dplyr)
+
+load("/data/github/pca_network/results/TCGA_DFS/model.RData")
+source("https://raw.githubusercontent.com/BarryDigby/pca_network/main/data/geom_violin.R")
 
 # Stage all gene sets for analysis
 file_path = "/data/github/pca_network/data/TILs.txt"
@@ -78,13 +80,16 @@ gsva$category = order_cols$risk
 wide_df = gsva %>%
   pivot_longer(cols = colnames(gsva[1:ncol(gsva)-1]), names_to = "Variable", values_to = "Score")
 
+# remove those that are not significant 
+wide_df = wide_df %>% filter(!Variable %in% c("Activated B cell", "Activated CD4 T cell", "Activated dendritic cell", "CD56bright natural killer cell",
+                                           "Immature  B cell", "Monocyte", "Neutrophil", "Plasmacytoid dendritic cell", "T follicular helper cell", "Type 17 T helper cell"))
 
-pdf("/data/github/pca_network/results/TCGA_DFS/TILs.pdf", width=16, height=6)
+pdf("/data/github/pca_network/results/TCGA_DFS/TILs.pdf", width=12, height=6)
 ggplot(wide_df, aes(x = Variable, y = Score, fill = category))+
   geom_split_violin(trim = FALSE, alpha = .4)+
   geom_boxplot(width = .2, alpha = .6,
                position = position_dodge(.25))+
-  scale_fill_viridis_d(option = "E") +
+  scale_fill_viridis_d(option = "D") +
   stat_summary(fun = "mean", geom = "point",
                position = position_dodge(width = 0.25)) +
   stat_summary(fun.data = "mean_se", geom = "errorbar", width = .1,
@@ -92,56 +97,3 @@ ggplot(wide_df, aes(x = Variable, y = Score, fill = category))+
   stat_compare_means(method = "t.test", label.y = 1.5, aes(label = after_stat(p.signif)))+
   theme(axis.text.x = element_text(angle = 45, vjust=1, hjust=1, size = 10, face = "bold"))
 dev.off()
-
-GeomSplitViolin <- ggproto(
-  "GeomSplitViolin", 
-  GeomViolin, 
-  draw_group = function(self, data, ..., draw_quantiles = NULL) {
-    data <- transform(data, 
-                      xminv = x - violinwidth * (x - xmin), 
-                      xmaxv = x + violinwidth * (xmax - x))
-    grp <- data[1,'group']
-    newdata <- plyr::arrange(
-      transform(data, x = if(grp%%2==1) xminv else xmaxv), 
-      if(grp%%2==1) y else -y
-    )
-    newdata <- rbind(newdata[1, ], newdata, newdata[nrow(newdata), ], newdata[1, ])
-    newdata[c(1,nrow(newdata)-1,nrow(newdata)), 'x'] <- round(newdata[1, 'x']) 
-    if (length(draw_quantiles) > 0 & !scales::zero_range(range(data$y))) {
-      stopifnot(all(draw_quantiles >= 0), all(draw_quantiles <= 1))
-      quantiles <- ggplot2:::create_quantile_segment_frame(data, draw_quantiles)
-      aesthetics <- data[rep(1, nrow(quantiles)), setdiff(names(data), c("x", "y")), drop = FALSE]
-      aesthetics$alpha <- rep(1, nrow(quantiles))
-      both <- cbind(quantiles, aesthetics)
-      quantile_grob <- GeomPath$draw_panel(both, ...)
-      ggplot2:::ggname("geom_split_violin", 
-                       grid::grobTree(GeomPolygon$draw_panel(newdata, ...), quantile_grob))
-    } else {
-      ggplot2:::ggname("geom_split_violin", GeomPolygon$draw_panel(newdata, ...))
-    }
-  }
-)
-
-geom_split_violin <- function (mapping = NULL, 
-                               data = NULL, 
-                               stat = "ydensity", 
-                               position = "identity", ..., 
-                               draw_quantiles = NULL, 
-                               trim = TRUE, 
-                               scale = "area", 
-                               na.rm = FALSE, 
-                               show.legend = NA, 
-                               inherit.aes = TRUE) {
-  layer(data = data, 
-        mapping = mapping, 
-        stat = stat, 
-        geom = GeomSplitViolin, 
-        position = position, 
-        show.legend = show.legend, 
-        inherit.aes = inherit.aes, 
-        params = list(trim = trim, 
-                      scale = scale, 
-                      draw_quantiles = draw_quantiles, 
-                      na.rm = na.rm, ...)
-  )
-}
