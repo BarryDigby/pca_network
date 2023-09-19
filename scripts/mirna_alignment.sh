@@ -4,7 +4,7 @@
 if [ -f hairpin.fa ]; then
     :
 else
-    wget https://www.mirbase.org/download_file/hairpin.fa
+    wget --no-check-certificate https://www.mirbase.org/download/hairpin.fa
 fi
 sed '#^[^>]#s#[^AUGCaugc]#N#g' hairpin.fa > hairpin_parse.fa
 sed -i 's#\s.*##' hairpin_parse.fa
@@ -75,6 +75,14 @@ while read -r line; do
     samtools index ${sample}.merged.bam
     cat *run*.err > ${sample}.err && rm *run*.err
 done < samples.txt
+
+# download GFF file
+if [ -f hsa.gff ]; then
+    :
+else
+    wget --no-check-certificate https://www.mirbase.org/download/hsa.gff3
+    mv hsa.gff3 hsa.gff
+fi
 
 # Quantify the *merged.bam files for each sample:
 mirtop gff --hairpin hairpin.fa --gtf hsa.gff -o mirtop --sps hsa *merged.bam

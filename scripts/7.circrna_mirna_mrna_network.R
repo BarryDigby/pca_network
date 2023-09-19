@@ -90,3 +90,40 @@ nodelist = nodelist %>% unique()
 
 write.table(edgelist, "/data/github/pca_network/results/edgelist.csv", sep="\t", row.names = F, quote=F)
 write.table(nodelist, "/data/github/pca_network/results/nodelist.csv", sep="\t", row.names = F, quote=F)
+
+# filter for prognostic model 
+
+master = master %>% filter(mrna %in% c("JAG2", "CTHRC1", "SLC2A4", "REG4"))
+
+edgelist <- data.frame(source = character(),
+                       target = character(),
+                       stringsAsFactors = FALSE)
+
+nodelist <- data.frame(id = character(),
+                       type = character(),
+                       logFC = numeric())
+
+for (i in 1:nrow(master)) {
+  row <- master[i,]
+  circ <- row$circrna
+  circ_fc <- row$avg_circ_lfc
+  mir <- row$mirna
+  mir_fc <- row$avg_mirna_lfc
+  gene <- row$mrna
+  gene_fc <- row$avg_mrna_lfc
+  
+  nodelist <- rbind(nodelist, data.frame(id = circ, type = "circRNA", logFC = circ_fc))
+  nodelist <- rbind(nodelist, data.frame(id = mir, type = "miRNA", logFC = mir_fc))
+  nodelist <- rbind(nodelist, data.frame(id = gene, type = "mRNA", logFC = gene_fc))
+  edgelist <- rbind(edgelist, data.frame(source = circ, target = mir, stringsAsFactors = FALSE))
+  edgelist <- rbind(edgelist, data.frame(source = mir, target = gene, stringsAsFactors = FALSE))
+}
+
+rownames(nodelist) <- NULL
+rownames(edgelist) <- NULL
+
+edgelist = edgelist %>% unique()
+nodelist = nodelist %>% unique()
+
+write.table(edgelist, "/data/github/pca_network/results/prognostic_edgelist.csv", sep="\t", row.names = F, quote=F)
+write.table(nodelist, "/data/github/pca_network/results/prognostic_nodelist.csv", sep="\t", row.names = F, quote=F)
