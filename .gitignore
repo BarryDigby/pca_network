@@ -1,4 +1,3 @@
-results/old_res/
 results/TCGA_mrna_scaled.txt
 results/TCGA_mrna_logcpm.txt
 .git/objects/pack/pack-a4e36887c6782342850553f7cad005b4976e6e36.pack
@@ -30,3 +29,5 @@ data/Homo_sapiens.GRCh38.109.gtf
 data/rna_cancer_sample.tsv
 mrna/GSE88752/ENSG_VERSION_TO_SYMBOL.txt
 mrna/GSE88752/gencode.v21.annotation.gtf
+mrna/TCGA/gencode.v36.annotation.gtf
+results/old_res/

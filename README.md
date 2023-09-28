@@ -62,6 +62,17 @@ We now required genes to be present in more than three experiments, however they
 
 Mirbase (3340308), miRNet (43847 - user submitted list of DE miRNAs) and mirtarbase (937083) all provided predicted miRNA - mRNA interactions. mirBase genes were provided as refseq identifiers and were converted accordingly using biomart. The resulting intersection with differentially expressed miRNAs resulted in 57179 predicted miRNA - mRNA interactions (41 unique miRNAs, 15249 unique genes) which will be subset downstream to contain differentially expressed mRNAs returned by the mRNA analysis section above. 
 
+### circRNA miRNA mRNA network
 
+The previously generated circRNA - miRNA network was loaded (195 circRNAs and 41 miRNA) along with the predicted miRNA - mRNA interactions. Differentially expressed mRNAs were used to subset the predicted miRNA - mRNA interactions, and along with average mrna logFC, were added back to the circRNA - miRNA network. 
 
+The final network has 195 circRNAs, 41 miRNAs and 307 genes. 
+
+Further filtering is required before finalising the ceRNA network:
+
+1. the higher the expression of circRNA, the lower the expression of targeted miRNAs and the higher the expression of downstream mRNAs (2481 results - 98 circRNAs, 24 miRNAs, 129 genes)
+
+2. the lower the expression of circRNA, the higher the expression of targeted miRNAs and the lower the expression of downstream mRNAs. (861 results - 43 circRNAs, 16 miRNAs, 112 genes)
+
+ 
 

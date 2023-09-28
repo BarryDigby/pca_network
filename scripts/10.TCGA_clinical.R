@@ -51,7 +51,7 @@ mat$surgical_r = ifelse(mat$Surgical.Margin.Resection.Status == "R2" | mat$Surgi
 
 
 w <- transcan(~ age + gleason + psa + path_t + path_n + clin_m +
-                surgical_r, imputed=TRUE, data=mat, pl=FALSE, pr=FALSE)
+                surgical_r, imputed=TRUE, data=mat, pl=TRUE, pr=FALSE)
 
 
 attach(mat)
@@ -102,7 +102,9 @@ forestmodel::forest_model(model_list = univ_models,covariates = vars_for_table,m
 forestmodel::forest_model(coxph(Surv(days_to_follow_up, bcr_status) ~ age + psa + gleason +  path_t + path_n + clin_m + surgical_r + risk_score, data=mat2))
 
 clin_mod = coxph(Surv(days_to_follow_up, bcr_status) ~ age + path_t + surgical_r + risk_score, data=mat2)
-step_clin = MASS::stepAIC(clin_mod, direction = "backward")
+
+# Harrell's C
+rcorr.cens(-1*mat2$risk_score, Surv(mat2$days_to_follow_up, mat2$bcr_status))[1]
 
 
 # nomogram doesnt save plot, save as pdf from window
@@ -125,15 +127,15 @@ cal5yr <- calibrate(rms_cox3, B=1000, u=365*5, maxdim=3, conf.int=TRUE, cmethod 
 cal8yr <- calibrate(rms_cox4, B=1000, u=365*8, maxdim=3, conf.int=TRUE, cmethod = "KM")
 
 pdf("/data/github/pca_network/results/TCGA_DFS/nomogram_calibration.pdf", width=7, height=7)
-plot(cal1yr, xlim=c(0,1), ylim=c(0,1), col="red", lwd=2)
-plot(cal3yr,  xlim=c(0,1), ylim=c(0,1), col="blue", add=T, lwd=2)
-plot(cal5yr,  xlim=c(0,1), ylim=c(0,1), col="forestgreen", add=T, lwd=2)
-plot(cal8yr,  xlim=c(0,1), ylim=c(0,1), col="black", add=T, lwd=2)
+plot(cal1yr, xlim=c(0,1), ylim=c(0,1), col="black", lwd=2)
+plot(cal3yr,  xlim=c(0,1), ylim=c(0,1), col="green", add=T, lwd=2)
+plot(cal5yr,  xlim=c(0,1), ylim=c(0,1), col="blue", add=T, lwd=2)
+plot(cal8yr,  xlim=c(0,1), ylim=c(0,1), col="red", add=T, lwd=2)
 my_legend =  c(paste0("1 year"),
                paste0("3 year"),
                paste0("5 year"),
                paste0("8 year"))
-legend("bottomright", legend = my_legend,col=c("red","blue", "forestgreen", "black"),lwd=2, cex=1)
+legend("bottomright", legend = my_legend,col=c("black","green", "blue", "red"),lwd=2, cex=1)
 dev.off()
 
 
@@ -150,15 +152,15 @@ roc_curves <- lapply(time_points, function(time) {
 
 
 pdf("/data/github/pca_network/results/TCGA_DFS/nomogram_roc_1358.pdf", width=7, height=6)
-plot(roc_curves[[1]], time=365, col="red", title = F, lwd=2)
-plot(roc_curves[[2]], time=floor(365*3), col="blue", add = T, title=F, lwd=2)
-plot(roc_curves[[3]], time=floor(365*5), col="forestgreen", add = T, title=F, lwd=2)
-plot(roc_curves[[4]], time=floor(365*8), col="black", add = T, title=F, lwd=2)
+plot(roc_curves[[1]], time=365, col="black", title = F, lwd=2)
+plot(roc_curves[[2]], time=floor(365*3), col="green", add = T, title=F, lwd=2)
+plot(roc_curves[[3]], time=floor(365*5), col="blue", add = T, title=F, lwd=2)
+plot(roc_curves[[4]], time=floor(365*8), col="red", add = T, title=F, lwd=2)
 my_legend =  c(paste0("1 year AUC: ", round(roc_curves[[1]]$auc,2)),
                paste0("3 year AUC: ", round(roc_curves[[2]]$auc,2)),
                paste0("5 year AUC:", round(roc_curves[[3]]$auc,2)),
                paste0("8 year AUC:", round(roc_curves[[4]]$auc,2)))
-legend("bottomright", legend = my_legend,col=c("red","blue", "forestgreen", "black"),lwd=2, cex=1)
+legend("bottomright", legend = my_legend,col=c("black","green", "blue", "red"),lwd=2, cex=1)
 dev.off()
 
 # nom vs individual predictors 1 year
@@ -179,17 +181,17 @@ roc_curves <- lapply(models, function(model) {
 })
 
 pdf("/data/github/pca_network/results/TCGA_DFS/nomogram_v_rest_1year.pdf", width=7, height=6)
-plot(roc_curves[[1]], time=365, col="red", title = F, lwd=2)
-plot(roc_curves[[2]], time=floor(365), col="blue", add = T, title=F, lwd=2)
-plot(roc_curves[[3]], time=floor(365), col="forestgreen", add = T, title=F, lwd=2)
-plot(roc_curves[[4]], time=floor(365), col="black", add = T, title=F, lwd=2)
-plot(roc_curves[[5]], time=floor(365), col="gold", add = T, title=F, lwd=2)
+plot(roc_curves[[1]], time=365, col="black", title = F, lwd=2)
+plot(roc_curves[[2]], time=floor(365), col="yellow", add = T, title=F, lwd=2)
+plot(roc_curves[[3]], time=floor(365), col="green", add = T, title=F, lwd=2)
+plot(roc_curves[[4]], time=floor(365), col="blue", add = T, title=F, lwd=2)
+plot(roc_curves[[5]], time=floor(365), col="red", add = T, title=F, lwd=2)
 my_legend =  c(paste0("Age AUC: ", round(roc_curves[[1]]$auc,2)),
                paste0("Pathological T AUC: ", round(roc_curves[[2]]$auc,2)),
                paste0("Resection status AUC: ", round(roc_curves[[3]]$auc,2)),
-               paste0("Risk score AUC: ", round(roc_curves[[4]]$auc,2)),
+               paste0("Prognostic index AUC: ", round(roc_curves[[4]]$auc,2)),
                paste0("Nomogram AUC: ", round(roc_curves[[5]]$auc,2)))
-legend("bottomright", legend = my_legend,col=c("red","blue", "forestgreen", "black", "gold"),lwd=2, cex=1)
+legend("bottomright", legend = my_legend,col=c("black","yellow", "green", "blue", "red"),lwd=2, cex=1)
 dev.off()
 
 # nom vs individual predictors 3 year
@@ -209,17 +211,17 @@ roc_curves <- lapply(models, function(model) {
 })
 
 pdf("/data/github/pca_network/results/TCGA_DFS/nomogram_v_rest_3year.pdf", width=7, height=6)
-plot(roc_curves[[1]], time=365*3, col="red", title = F, lwd=2)
-plot(roc_curves[[2]], time=floor(365*3), col="blue", add = T, title=F, lwd=2)
-plot(roc_curves[[3]], time=floor(365*3), col="forestgreen", add = T, title=F, lwd=2)
-plot(roc_curves[[4]], time=floor(365*3), col="black", add = T, title=F, lwd=2)
-plot(roc_curves[[5]], time=floor(365*3), col="gold", add = T, title=F, lwd=2)
+plot(roc_curves[[1]], time=365, col="black", title = F, lwd=2)
+plot(roc_curves[[2]], time=floor(365), col="yellow", add = T, title=F, lwd=2)
+plot(roc_curves[[3]], time=floor(365), col="green", add = T, title=F, lwd=2)
+plot(roc_curves[[4]], time=floor(365), col="blue", add = T, title=F, lwd=2)
+plot(roc_curves[[5]], time=floor(365), col="red", add = T, title=F, lwd=2)
 my_legend =  c(paste0("Age AUC: ", round(roc_curves[[1]]$auc,2)),
                paste0("Pathological T AUC: ", round(roc_curves[[2]]$auc,2)),
                paste0("Resection status AUC: ", round(roc_curves[[3]]$auc,2)),
-               paste0("Risk score AUC: ", round(roc_curves[[4]]$auc,2)),
+               paste0("Prognostic index AUC: ", round(roc_curves[[4]]$auc,2)),
                paste0("Nomogram AUC: ", round(roc_curves[[5]]$auc,2)))
-legend("bottomright", legend = my_legend,col=c("red","blue", "forestgreen", "black", "gold"),lwd=2, cex=1)
+legend("bottomright", legend = my_legend,col=c("black","yellow", "green", "blue", "red"),lwd=2, cex=1)
 dev.off()
 
 # nom vs individual predictors 5 year
@@ -239,17 +241,17 @@ roc_curves <- lapply(models, function(model) {
 })
 
 pdf("/data/github/pca_network/results/TCGA_DFS/nomogram_v_rest_5year.pdf", width=7, height=6)
-plot(roc_curves[[1]], time=365*5, col="red", title = F, lwd=2)
-plot(roc_curves[[2]], time=floor(365*5), col="blue", add = T, title=F, lwd=2)
-plot(roc_curves[[3]], time=floor(365*5), col="forestgreen", add = T, title=F, lwd=2)
-plot(roc_curves[[4]], time=floor(365*5), col="black", add = T, title=F, lwd=2)
-plot(roc_curves[[5]], time=floor(365*5), col="gold", add = T, title=F, lwd=2)
+plot(roc_curves[[1]], time=365, col="black", title = F, lwd=2)
+plot(roc_curves[[2]], time=floor(365), col="yellow", add = T, title=F, lwd=2)
+plot(roc_curves[[3]], time=floor(365), col="green", add = T, title=F, lwd=2)
+plot(roc_curves[[4]], time=floor(365), col="blue", add = T, title=F, lwd=2)
+plot(roc_curves[[5]], time=floor(365), col="red", add = T, title=F, lwd=2)
 my_legend =  c(paste0("Age AUC: ", round(roc_curves[[1]]$auc,2)),
                paste0("Pathological T AUC: ", round(roc_curves[[2]]$auc,2)),
                paste0("Resection status AUC: ", round(roc_curves[[3]]$auc,2)),
-               paste0("Risk score AUC: ", round(roc_curves[[4]]$auc,2)),
+               paste0("Prognostic index AUC: ", round(roc_curves[[4]]$auc,2)),
                paste0("Nomogram AUC: ", round(roc_curves[[5]]$auc,2)))
-legend("bottomright", legend = my_legend,col=c("red","blue", "forestgreen", "black", "gold"),lwd=2, cex=1)
+legend("bottomright", legend = my_legend,col=c("black","yellow", "green", "blue", "red"),lwd=2, cex=1)
 dev.off()
 
 # nom vs individual predictors 8 year
@@ -269,17 +271,17 @@ roc_curves <- lapply(models, function(model) {
 })
 
 pdf("/data/github/pca_network/results/TCGA_DFS/nomogram_v_rest_8year.pdf", width=7, height=6)
-plot(roc_curves[[1]], time=365*8, col="red", title = F, lwd=2)
-plot(roc_curves[[2]], time=floor(365*8), col="blue", add = T, title=F, lwd=2)
-plot(roc_curves[[3]], time=floor(365*8), col="forestgreen", add = T, title=F, lwd=2)
-plot(roc_curves[[4]], time=floor(365*8), col="black", add = T, title=F, lwd=2)
-plot(roc_curves[[5]], time=floor(365*8), col="gold", add = T, title=F, lwd=2)
+plot(roc_curves[[1]], time=365, col="black", title = F, lwd=2)
+plot(roc_curves[[2]], time=floor(365), col="yellow", add = T, title=F, lwd=2)
+plot(roc_curves[[3]], time=floor(365), col="green", add = T, title=F, lwd=2)
+plot(roc_curves[[4]], time=floor(365), col="blue", add = T, title=F, lwd=2)
+plot(roc_curves[[5]], time=floor(365), col="red", add = T, title=F, lwd=2)
 my_legend =  c(paste0("Age AUC: ", round(roc_curves[[1]]$auc,2)),
                paste0("Pathological T AUC: ", round(roc_curves[[2]]$auc,2)),
                paste0("Resection status AUC: ", round(roc_curves[[3]]$auc,2)),
-               paste0("Risk score AUC: ", round(roc_curves[[4]]$auc,2)),
+               paste0("Prognostic index AUC: ", round(roc_curves[[4]]$auc,2)),
                paste0("Nomogram AUC: ", round(roc_curves[[5]]$auc,2)))
-legend("bottomright", legend = my_legend,col=c("red","blue", "forestgreen", "black", "gold"),lwd=2, cex=1)
+legend("bottomright", legend = my_legend,col=c("black","yellow", "green", "blue", "red"),lwd=2, cex=1)
 dev.off()
 
 

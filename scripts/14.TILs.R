@@ -10,8 +10,8 @@ library(tidyr)
 library(dplyr)
 
 load("/data/github/pca_network/results/TCGA_DFS/model.RData")
-source("https://raw.githubusercontent.com/BarryDigby/pca_network/main/data/geom_violin.R")
 
+source("https://raw.githubusercontent.com/BarryDigby/pca_network/main/data/geom_violin.R")
 # Stage all gene sets for analysis
 file_path = "/data/github/pca_network/data/TILs.txt"
 
@@ -37,18 +37,25 @@ TILs = split(
 TIL_genes = trimws(unique(long_df$gene))
 
 # read TCGA-PRAD
-x = read.csv("/data/github/pca_network/results/TCGA_mrna_logcpm.txt", header=T, sep="\t")
-tcga_df = x
-colnames(tcga_df) = gsub("\\.", "-", colnames(tcga_df))
-mrna_attributes = read.csv("/data/github/pca_network/results/TCGA_mrna_attributes.txt", header=T, sep="\t")
-mrna_attributes = mrna_attributes[which(mrna_attributes$external_gene_name %in% TIL_genes),]
-tcga_df = merge(tcga_df, mrna_attributes[,c(1,2)], by.x=0, by.y="ensembl_gene_id_version")
-tcga_df = tibble::column_to_rownames(tcga_df, "external_gene_name")
+load("/data/github/pca_network/results/TCGA_DFS/model.RData")
+mrna_attributes = read.csv("/data/github/pca_network/mrna/TCGA/ENS_BIO_HGNC.txt", header=T, sep="\t")
+mrna_attributes = mrna_attributes[which(mrna_attributes$biotype == "protein_coding"),]
+tcga_df = merge(mrna_df, mrna_attributes[,c(1,3)], by.x=0, by.y="ensembl_gene_version_id")
+rownames(tcga_df) <- make.names(tcga_df$Gene, unique = TRUE)
+#tcga_df = tibble::column_to_rownames(tcga_df, "Gene")
 tcga_df = tcga_df[,2:ncol(tcga_df)]
 tcga_df = tcga_df[, rownames(cox)]
-tcga_mat = as.matrix(tcga_df)
 
-gsva = GSVA::gsva(tcga_mat, TILs, method = "gsva", kcdf = "Gaussian",  min.sz = 1, max.sz = 500, mx.diff = TRUE, verbose = FALSE)
+
+tcga_meta = data.frame(row.names = colnames(tcga_df),
+                       Risk_strata = cox$risk_category)
+
+tcga_meta$Risk_strata = ifelse(tcga_meta$Risk_strata == "High risk", "High", "Low")
+y <- edgeR::DGEList(tcga_df)
+logcpm <- edgeR::cpm(y, normalized.lib.sizes = T, log=TRUE)
+tcga_mat = logcpm
+
+gsva = GSVA::gsva(tcga_mat, TILs, method = "ssgsea", kcdf = "Gaussian",  min.sz = 1, max.sz = 500, mx.diff = TRUE, verbose = FALSE)
 
 order_cols = data.frame(id = rownames(cox),
                         risk = cox$risk_category)
@@ -81,10 +88,12 @@ wide_df = gsva %>%
   pivot_longer(cols = colnames(gsva[1:ncol(gsva)-1]), names_to = "Variable", values_to = "Score")
 
 # remove those that are not significant 
-wide_df = wide_df %>% filter(!Variable %in% c("Activated B cell", "Activated CD4 T cell", "Activated dendritic cell", "CD56bright natural killer cell",
-                                           "Immature  B cell", "Monocyte", "Neutrophil", "Plasmacytoid dendritic cell", "T follicular helper cell", "Type 17 T helper cell"))
+#wide_df = wide_df %>% filter(!Variable %in% c("Activated B cell", "Activated CD4 T cell", "Activated dendritic cell", "CD56bright natural killer cell",
+                              #             "Immature  B cell", "Monocyte", "Neutrophil", "Plasmacytoid dendritic cell", "T follicular helper cell", "Type 17 T helper cell"))
 
-pdf("/data/github/pca_network/results/TCGA_DFS/TILs.pdf", width=12, height=6)
+wide_df$Variable = gsub("memeory", "memory", wide_df$Variable)
+
+pdf("/data/github/pca_network/results/TCGA_DFS/TILs.pdf", width=16, height=6)
 ggplot(wide_df, aes(x = Variable, y = Score, fill = category))+
   geom_split_violin(trim = FALSE, alpha = .4)+
   geom_boxplot(width = .2, alpha = .6,
@@ -94,6 +103,7 @@ ggplot(wide_df, aes(x = Variable, y = Score, fill = category))+
                position = position_dodge(width = 0.25)) +
   stat_summary(fun.data = "mean_se", geom = "errorbar", width = .1,
                position = position_dodge(width = 0.25)) + theme_bw() +
-  stat_compare_means(method = "t.test", label.y = 1.5, aes(label = after_stat(p.signif)))+
-  theme(axis.text.x = element_text(angle = 45, vjust=1, hjust=1, size = 10, face = "bold"))
+  stat_compare_means(method = "t.test", label.y = 0.8, aes(label = after_stat(p.signif)))+
+  theme(axis.text.x = element_text(angle = 55, vjust=1, hjust=1, size = 10, face = "bold"),
+        axis.title.x = element_blank())
 dev.off()

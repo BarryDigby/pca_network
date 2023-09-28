@@ -198,14 +198,14 @@ os_mat$patients_inc_risk = seq(1,nrow(os_mat),1)
 os_mat$status = factor(os_mat$bcr_status)
 os_mat$years = atlas_meta$years_to_follow_up
 
-pdf("/data/github/pca_network/results/TCGA_DFS/risk_score_dist.pdf", width = 8, height = 4)
+pdf("/data/github/pca_network/results/TCGA_DFS/risk_score_dist.pdf", width = 8, height = 3)
 ggscatter(os_mat, y="risk_score", x="patients_inc_risk", color="risk_category", fill="risk_category", 
-          ylab="Risk Score", xlab = NULL, palette = c("red","royalblue3"), ggtheme = theme_bw(), size = 1) + 
+          ylab="Prognostic index", xlab = NULL, palette = c("red","royalblue3"), ggtheme = theme_bw(), size = 1) + 
   geom_vline(xintercept = mean(os_mat$patients_inc_risk), linetype = "dashed", color = "grey10" ) + 
   geom_hline(yintercept = mean(os_mat$risk_score), linetype="dashed", color="grey10")
 dev.off()
 
-pdf("/data/github/pca_network/results/TCGA_DFS/scatter_dfs.pdf", width = 8, height = 4)
+pdf("/data/github/pca_network/results/TCGA_DFS/scatter_dfs.pdf", width = 8, height = 3)
 ggpubr::ggscatter(os_mat %>% dplyr::arrange(status), x="patients_inc_risk", y="days_to_follow_up", shape="status", ylab = "Time (days)",
                   color="status", fill="status", palette = c("royalblue3","red"), ggtheme = theme_bw()) + 
   geom_vline(xintercept = mean(os_mat$patients_inc_risk), linetype = "dashed", color = "grey10" )
@@ -218,7 +218,7 @@ ann_col = data.frame(row.names = rownames(os_mat),
 col <- c("red", "royalblue3")
 names(col) <- c("High risk", "Low risk")
 ann_clr <- list(Group = col)
-pdf("/data/github/pca_network/results/TCGA_DFS/genes_heatmap.pdf", height = 4, width = 8)
+pdf("/data/github/pca_network/results/TCGA_DFS/genes_heatmap.pdf", height = 3, width = 8)
 p = pheatmap::pheatmap(t(os_mat[,1:4]), labels_col = FALSE, color = col_palette, cluster_cols = F, 
                        scale = "column", annotation_col = ann_col, annotation_colors = ann_clr)
 print(p)

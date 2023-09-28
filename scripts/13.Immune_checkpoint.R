@@ -28,7 +28,7 @@ tidy_df = tidy_df %>% filter(!Variable %in% c("ADORA2A", "CD160", "CD200", "CD27
 # Create the violin plot
 pdf("/data/github/pca_network/results/TCGA_DFS/Checkpoints.pdf", width=12, height=6)
 ggplot(tidy_df, aes(x = Variable, y = Score, fill = category))+
-  geom_split_violin(trim = FALSE, alpha = .4)+
+  geom_split_violin(alpha = .4)+
   geom_boxplot(width = .2, alpha = .6,
                position = position_dodge(.25))+
   scale_fill_viridis_d(option = "D") +
@@ -40,6 +40,45 @@ ggplot(tidy_df, aes(x = Variable, y = Score, fill = category))+
   theme(axis.text.x = element_text(angle = 45, vjust=1, hjust=1, size = 10, face = "bold"))
 dev.off()
 
+## mcpcounter part 2?!
+# exp = tcga, genes on rows
+mcp = MCPcounter.estimate(tcga_df,featuresType="HUGO_symbols",
+                    probesets=read.table(curl("http://raw.githubusercontent.com/ebecht/MCPcounter/master/Signatures/probesets.txt"),sep="\t",stringsAsFactors=FALSE,colClasses="character"),
+                    genes=read.table(curl("http://raw.githubusercontent.com/ebecht/MCPcounter/master/Signatures/genes.txt"),sep="\t",stringsAsFactors=FALSE,header=TRUE,colClasses="character",check.names=FALSE))
+
+
+mcp = as.data.frame(t(scale(t(mcp), scale=T, center=T)))
+mcp = as.data.frame(t(mcp))
+mcp$Risk_strata = cox$risk_category
+
+tidy_df <- mcp %>%
+  pivot_longer(cols = colnames(mcp[,1:ncol(mcp)-1]), names_to = "Gene", values_to = "Score")
+
+tidy_df = tidy_df[which(tidy_df$Score < 9),]
+# Create the violin plot
+pdf("/data/github/pca_network/results/TCGA_DFS/MCPcounter.pdf", width=12, height=6)
+ggplot(tidy_df, aes(x = Gene, y = Score, fill = Risk_strata))+
+  geom_split_violin(trim = FALSE,  alpha = .4)+
+  geom_boxplot(width = .2, alpha = .6, outlier.size = 0.2,
+               position = position_dodge(.25))+
+  scale_fill_viridis_d(option = "D") + 
+  stat_summary(fun = "mean", geom = "point",
+               position = position_dodge(width = 0.25)) +
+  stat_summary(fun.data = "mean_se", geom = "errorbar", width = .1,
+               position = position_dodge(width = 0.25)) + theme_bw() +
+  stat_compare_means(method = "t.test", label.y = 9, aes(label = after_stat(p.signif)))+
+  theme(axis.text.x = element_text(angle = 55, vjust=1, hjust=1, size = 10, face = "bold"),
+        axis.title.x = element_blank())
+dev.off()
+
+
+ggplot(tidy_df, aes(x = Gene, y = Score, fill = Risk_strata)) +
+  geom_split_violin(alpha = .4, trim = TRUE) +
+  geom_boxplot(width = .2, alpha = .6, fatten = NULL, show.legend = FALSE) +
+  stat_summary(fun.data = "mean_se", geom = "pointrange", show.legend = F, 
+               position = position_dodge(.175)) +
+  scale_fill_brewer(palette = "Dark2", name = "Language group") +
+  theme_minimal()
 
 
 library(immunedeconv)
