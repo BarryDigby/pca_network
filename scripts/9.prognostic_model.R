@@ -94,6 +94,10 @@ test.cp = cox.zph(mult_cx, transform = "km")
 test.cp
 
 remove = rownames(test.cp$table)[which(test.cp$table[,"p"] <= 0.05)]
+# save for plot
+sec31b = ggcoxzph2(test.cp)[2]
+slc22a3 = ggcoxzph2(test.cp)[12]
+
 genes = setdiff(genes, remove)
 
 univ_mat = univ_mat[,c(genes, "days_to_follow_up", "bcr_status")]
@@ -102,6 +106,10 @@ test.cp = cox.zph(mult_cx)
 test.cp
 
 remove = rownames(test.cp$table)[which(test.cp$table[,"p"] <= 0.05)]
+
+srrd = ggcoxzph2(test.cp)[2]
+gad1 = ggcoxzph2(test.cp)[8]
+
 genes = setdiff(genes, remove)
 
 univ_mat = univ_mat[,c(genes, "days_to_follow_up", "bcr_status")]
@@ -113,6 +121,10 @@ test.cp
 source("https://raw.githubusercontent.com/BarryDigby/pca_network/main/data/modified_coxzph.R")
 
 pdf("/data/github/pca_network/results/TCGA_DFS/schoenfeld_residuals.pdf", height=12,width=20)
+gad1
+sec31b
+srrd
+slc22a3
 ggcoxzph2(test.cp)
 dev.off()
 
