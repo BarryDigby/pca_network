@@ -155,7 +155,7 @@ summary(step)
 step_df = summary(step)$coeff
 write.csv(step_df, "/data/github/pca_network/results/TCGA_DFS/stepAIC_summary.csv", row.names = TRUE, quote = FALSE)
 
-forestmodel::forest_model(coxph(Surv(days_to_follow_up, bcr_status) ~ REG4 + SLC2A4 + JAG2 + CTHRC1, data=univ_mat))
+forestmodel::forest_model(coxph(Surv(days_to_follow_up, bcr_status) ~ REG4 + SLC2A4 + PAPSS1 + TRIM13 + INPP5E + JAG2 + CTHRC1, data=univ_mat))
 
 final_model = coxph(Surv(days_to_follow_up, bcr_status) ~ REG4 + SLC2A4 + JAG2 + CTHRC1, data=univ_mat)
 summary(final_model)

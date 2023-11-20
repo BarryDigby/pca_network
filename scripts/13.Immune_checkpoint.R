@@ -56,7 +56,7 @@ tidy_df <- mcp %>%
 
 tidy_df = tidy_df[which(tidy_df$Score < 9),]
 # Create the violin plot
-pdf("/data/github/pca_network/results/TCGA_DFS/MCPcounter.pdf", width=12, height=6)
+pdf("/data/github/pca_network/results/TCGA_DFS/MCPcounter.pdf", width=13, height=6)
 ggplot(tidy_df, aes(x = Gene, y = Score, fill = Risk_strata))+
   geom_split_violin(trim = FALSE,  alpha = .4)+
   geom_boxplot(width = .2, alpha = .6, outlier.size = 0.2,
