@@ -57,7 +57,7 @@ ggpubr::ggscatter(dataGG, x="PC1", y="PC2",
                   title = "Log-transformed normalized expression data\n [GSE21036]",
                   xlab = paste0("PC1, VarExp: ", percentVar[1], "%"),
                   ylab = paste0("PC2, VarExp: ", percentVar[2], "%"),
-                  ellipse = TRUE, star.plot = FALSE,
+                  ellipse = FALSE, star.plot = FALSE,
                   ggtheme = theme_bw()) +
   theme(legend.position = "right") +
   theme(plot.title = element_text(hjust = 0.5, face = "bold"))
