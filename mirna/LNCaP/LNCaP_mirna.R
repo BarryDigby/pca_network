@@ -11,7 +11,7 @@ ggpubr::ggline(alignment, x="Run", y="Processed", color = "Sample", palette = c(
 ggpubr::ggline(alignment, x="Run", y="Aligned", color = "Sample", palette = c("red", "forestgreen", "royalblue", "purple", "orange", "black", "black", "black", "black", "black", "black"))
 
 
-mat = read.csv("/data/LNCaP_miRNA/Trim_Experiment/mirtop/mirna.tsv", sep="\t", header=T, row.names="miRNA")
+mat = read.csv("/data/github/pca_network/mirna/LNCaP/mirna.tsv", sep="\t", header=T, row.names="miRNA")
 # dump old Clone1 samples
 mat = mat[,-c(2,5)]
 meta = data.frame(row.names = colnames(mat),

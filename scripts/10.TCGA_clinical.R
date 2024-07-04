@@ -285,7 +285,7 @@ legend("bottomright", legend = my_legend,col=c("black","yellow", "green", "blue"
 dev.off()
 
 
-cindex <- validate(nom, mat2, event = mat2$bcr_status)
+cindex <- validate(nom, B=150)
 
 
 
@@ -395,14 +395,14 @@ rsample::vfold_cv(mat2, v = 4, repeats = 25) %>%
 # load datdists..
 
 surv.obj=with(mat2,Surv(days_to_follow_up,bcr_status))
-cox.mod=rms::cph(Surv(days_to_follow_up, bcr_status) ~ age + path_t + surgical_r + risk_score, data=mat2, surv = T, x=T, y=T, time.inc = 356*8)
+cox.mod=rms::cph(Surv(days_to_follow_up, bcr_status) ~ age + path_t + surgical_r + risk_score, data=mat2, surv = T, x=T, y=T, time.inc = 356*5)
 
 ###Create your survival estimates
-estimates=survest(cox.mod,newdata=mat2,times=8*365)$surv
+estimates=survest(cox.mod,newdata=mat2,times=c(1*365, 3*365,5*365))$surv
 
 
 ###Determine concordance
-c_index = rcorr.cens(x=estimates,S=surv.obj)
+c_index = rcorr.cens(x=estimates[,2],S=surv.obj)
 c_index[1]
 
 

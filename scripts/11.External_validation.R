@@ -10,7 +10,27 @@ library(survAUC)
 library(pec)
 load("/data/github/pca_network/results/TCGA_DFS/model.RData")
 
-
+counting <- function(df){
+  cases <- nrow(df)
+  bcr_overall <- table(df$bcr_status)
+  bcr_events <- bcr_overall[[2]]
+  year_one = df[which(df$days_to_follow_up < 365),]
+  year_one =  nrow(year_one[which(year_one$bcr_status==1),])
+  year_three = df[which(df$days_to_follow_up >= 365 & df$days_to_follow_up < 1095 ),]
+  year_three =  nrow(year_three[which(year_three$bcr_status==1),])
+  year_five = df[which(df$days_to_follow_up >= 1095 & df$days_to_follow_up < 1825 ),]
+  year_five =  nrow(year_five[which(year_five$bcr_status==1),])
+  year_eight = df[which(df$days_to_follow_up >= 1825 & df$days_to_follow_up < 2920 ),]
+  year_eight=  nrow(year_eight[which(year_eight$bcr_status==1),])
+  
+  print(paste("Number of cases: ", cases))
+  print(paste("Overall BCR: \n", bcr_overall))
+  print(paste("BCR events: ", bcr_events))
+  print(paste("Year one events: ", year_one))
+  print(paste("Year three events: ", year_three))
+  print(paste("Year five events: ", year_five))
+  print(paste("Year eight events: ", year_eight))
+}
 
 # Belfast dataset
 belfast_rds = readRDS("/data/github/pca_network/data/Belfast_eSet.RDS")
@@ -114,7 +134,7 @@ p1$plot +
   geom_step(data=surv_val[[2]], aes(x = time, y = surv), linetype=2)
 
 
-# MEthod 5 -logrank - skipped
+# MEthod 5 -logrank - skipped - its in the plot above. 
 
 # Method 6. Hazard Ratios between risk groups
 # Derivation
