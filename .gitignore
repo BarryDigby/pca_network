@@ -26,5 +26,6 @@ mrna/GSE88752/ENSG_VERSION_TO_SYMBOL.txt
 mrna/GSE88752/gencode.v21.annotation.gtf
 mrna/TCGA/gencode.v36.annotation.gtf
 results/old_res/
-results/2025*/
-!results/2025-07-01/**
+results/2025-*/
+!results/2025-07-01/
+results/jan25/
