@@ -24,8 +24,18 @@ TCGA$experiment ="TCGA"
 
 # intersect
 intersection = rbind(GSE21036, GSE23022, GSE36803, CLONE1, CLONE9, GSE46738, GSE46738, TCGA)
-intersection = intersection %>% group_by(miRNA) %>% filter(length(unique(experiment))>=2 & "CLONE1" %in% experiment) %>% ungroup()
-intersection = intersection %>% group_by(miRNA) %>% filter(all(logFC>0) | all(logFC<0)) %>% ungroup()
+intersection = intersection %>%
+  group_by(miRNA) %>%
+  mutate(
+    ENZ = any(experiment %in% c("CLONE1", "CLONE9")),
+    TVN = any(experiment %in% c("TCGA", "GSE46738", "GSE45604", "GSE36803", "GSE23022", "GSE21036"))
+  ) %>%
+  filter(ENZ & TVN)%>%
+  ungroup() %>%
+  dplyr::select(-ENZ, -TVN)
+#intersection = intersection %>% group_by(miRNA) %>% filter(length(unique(experiment))>=2 & "CLONE1" %in% experiment) %>% ungroup()
+intersection = intersection %>% group_by(miRNA) %>% filter(all(logFC>0) | all(logFC< 0)) %>% ungroup()
+intersection = intersection %>% group_by(miRNA) %>% filter(all(adj.P.Val <= 0.05)) %>% ungroup()
 
 write.table(intersection, "/data/github/pca_network/results/mirna_intersection.txt", sep="\t", row.names = FALSE, quote = FALSE)
 

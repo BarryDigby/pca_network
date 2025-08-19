@@ -1,11 +1,6 @@
-results/TCGA_mrna_scaled.txt
-results/TCGA_mrna_logcpm.txt
-.git/objects/pack/pack-a4e36887c6782342850553f7cad005b4976e6e36.pack
-.git/objects/pack/tmp_pack_E4e8eQ
-.git/objects/pack/pack-f60df9daaa57de16c9eeeb2fc589b580f95e4b41.pack
-.git/objects/b7/5fbc4a1e0fc598d599377123a55b028111bacd
-.git/objects/81/f4220f9925789a59728aa8a4707c0c9069e58d
-.git/objects/2b/208d7d35dbb363b0c3926d5721836daae53c1b
+results/RF_variable_selection.RDS
+results/processed_datasets.RData
+.git/objects/pack/pack-7aa8e98eeb118b2f51167a356a6eb9f1f32b31ad.pack
 data/CIT_eSet.RDS
 data/miRDB_v6.0_prediction_result.txt
 data/TCGA-PRAD_eSet.RDS
@@ -31,3 +26,5 @@ mrna/GSE88752/ENSG_VERSION_TO_SYMBOL.txt
 mrna/GSE88752/gencode.v21.annotation.gtf
 mrna/TCGA/gencode.v36.annotation.gtf
 results/old_res/
+results/2025*/
+!results/2025-07-01/**

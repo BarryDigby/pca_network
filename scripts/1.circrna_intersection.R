@@ -1,4 +1,7 @@
 #!/usr/bin/env Rscript
+
+# Script to intersect circRNAs from both studies
+
 library(dplyr)
 GSE113153 = read.table("/data/github/pca_network/circrna/GSE113153/high_vs_low.txt", sep="\t", header=T)
 GSE113153$experiment = "GSE113153"
@@ -14,13 +17,20 @@ master = rbind(GSE113153, CLONE1, CLONE9)
 #n_2 = names(circ_counts[circ_counts >= 2])
 #master = master[which(master$circbaseID %in% n_2),]
 
-# works like groupby() in python, use unique length to set condition 
-# 2 or more datasets seems more robust before filtering by fold change direction.
-intersection = master %>% group_by(circbaseID) %>% filter(length(unique(experiment))>=2 & "CLONE1" %in% experiment) %>% ungroup()
+# circ must show up in enz treat + t v n 
+intersection = master %>% 
+  group_by(circbaseID) %>% 
+  filter(
+    "GSE113153" %in% experiment & 
+      (("CLONE1" %in% experiment | "CLONE9" %in% experiment))
+    ) %>%
+      ungroup()
+#length(unique(experiment))>=2 & "GSE113153" %in% experiment) %>% ungroup()
 intersection = na.omit(intersection)
 
-# fold change consitency.. and filtering if you want it. 
+# fold change consistency (direction) across experiments
 intersection = intersection %>% group_by(circbaseID) %>% filter(all(logFC > 0) | all(logFC < 0)) %>% ungroup()
+intersection = intersection %>% group_by(circbaseID) %>% filter(all(adj.P.Val <= 0.05)) %>% ungroup()
 
 # tidy and save result. 
 intersection = subset(intersection, select = c(circbaseID, logFC, AveExpr, t, P.Value, adj.P.Val, B, GeneSymbol, experiment))
@@ -29,5 +39,5 @@ write.table(intersection, "/data/github/pca_network/results/circrna_intersection
 
 library(ggvenn)
 pdf("/data/github/pca_network/results/circrna_intersection.pdf", width=5, height=6)
-ggvenn::ggvenn(list(Clone_1 = CLONE1$circbaseID, Clone_9 = CLONE9$circbaseID, GSE113153 = GSE113153$circbaseID), show_percentage = F)
+ggvenn::ggvenn(list(Clone_1 = unique(CLONE1$circbaseID), Clone_9 = unique(CLONE9$circbaseID), GSE113153 = unique(GSE113153$circbaseID)), show_percentage = F)
 dev.off()

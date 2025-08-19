@@ -92,9 +92,9 @@ write.table(edgelist, "/data/github/pca_network/results/edgelist.csv", sep="\t",
 write.table(nodelist, "/data/github/pca_network/results/nodelist.csv", sep="\t", row.names = F, quote=F)
 
 # filter for prognostic model 
-
-master = master %>% filter(mrna %in% c("JAG2", "CTHRC1", "SLC2A4", "REG4"))
-
+#master = master %>% rename(mrna = gene_ID)
+master = master %>% filter(mrna %in% c("RBM47", "NPAS2", "NEU3", "MAPK8IP2", "IAH1", "RNASEH2C", "CNBD2", "MTERF4", "FA2H", "SS18L2", "SFRP4", "SSTR1", "BGN", "PDCD4", "RAB11FIP2", "BHLHE40", "BTN3A1", "FAM227B", "RNF122", "PHYHD1", "LIX1", "B4GALT1", "SPARC"))
+                                       
 edgelist <- data.frame(source = character(),
                        target = character(),
                        stringsAsFactors = FALSE)
@@ -125,5 +125,5 @@ rownames(edgelist) <- NULL
 edgelist = edgelist %>% unique()
 nodelist = nodelist %>% unique()
 
-write.table(edgelist, "/data/github/pca_network/results/prognostic_edgelist.csv", sep="\t", row.names = F, quote=F)
-write.table(nodelist, "/data/github/pca_network/results/prognostic_nodelist.csv", sep="\t", row.names = F, quote=F)
+write.table(edgelist, "/data/github/pca_network/results/2025-07-01/prognostic_edgelist.csv", sep="\t", row.names = F, quote=F)
+write.table(nodelist, "/data/github/pca_network/results/2025-07-01/prognostic_nodelist.csv", sep="\t", row.names = F, quote=F)
