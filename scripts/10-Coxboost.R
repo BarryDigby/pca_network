@@ -118,6 +118,8 @@ Xbavg_dev <- sum(coef(fit)*fit$means)
 dev_lp <- Xb_dev - Xbavg_dev
 dev_mat$lp <- dev_lp
 dev_mat$prob <- predict(fit, dev_mat, "risk")
+saveRDS(dev_mat, file = "/data/github/pca_network/results/dev_mat_with_lp.RDS")
+saveRDS(fit, file = "/data/github/pca_network/results/final_model_fit.RDS")
 
 # model calibration slope
 fit_dev <- coxph(Surv(days_to_follow_up, bcr_status) ~ lp, dev_mat)
@@ -148,9 +150,21 @@ out_dev <- c(out_dev, c(round(2*(diff(fit_dev$loglik)), 2), round(1-pchisq(2*(di
 dev_c <- survcomp::concordance.index(x = dev_mat$lp, surv.time = dev_mat$days_to_follow_up, surv.event = dev_mat$bcr_status)
 out_dev <- c(out_dev, round(dev_c$c.index, 4), round(dev_c$lower, 4), round(dev_c$upper, 4))
 
+# Hazard Ratio (evaluated on binary 0/1 high-risk vs low-risk indicator, ref = "0" as low risk)
+dev_mat$group <- as.numeric(dev_mat$lp > median(dev_mat$lp))
+dev_mat$group <- as.factor(dev_mat$group)
+dev_mat$group <- relevel(dev_mat$group, ref = "0")
+fit_dev <- coxph(Surv(days_to_follow_up, bcr_status) ~ group, data = dev_mat)
+
+# Reviewer comment fix: Exponentiate Cox regression coefficient and confidence interval to report true Hazard Ratio (HR = exp(beta)) and 95% CI
+# out_dev <- c(out_dev, c(round(as.numeric(coef(fit_dev)), 4), round(as.numeric(summary(fit_dev)$coef[,3]), 4),  paste(round(confint(fit_dev)[,1], 2), round(confint(fit_dev)[,2], 2), sep = "-"), summary(fit_dev)$coef[,5]))
+hr_dev <- exp(as.numeric(coef(fit_dev)))
+hr_ci_dev <- exp(confint(fit_dev))
+out_dev <- c(out_dev, c(round(hr_dev, 4), round(as.numeric(summary(fit_dev)$coef[,3]), 4), paste(round(hr_ci_dev[1], 2), round(hr_ci_dev[2], 2), sep = "-"), summary(fit_dev)$coef[,5]))
+
 # Kaplan Meier 1 indicates high risk group
 dev_mat$group <- ifelse(dev_mat$lp > median(dev_mat$lp), "High", "Low")
-fit_dev <- survfit(Surv(days_to_follow_up, bcr_status) ~ group, data = dev_mat)
+fit_dev_km <- survfit(Surv(days_to_follow_up, bcr_status) ~ group, data = dev_mat)
 surv_object <- Surv(dev_mat$days_to_follow_up, dev_mat$bcr_status)
 res2 = survfit(surv_object ~ group, data=dev_mat)
 p1 <- ggsurvplot(res2,
@@ -164,12 +178,14 @@ p1 <- ggsurvplot(res2,
                  data=dev_mat,
                  xlab="Time (days)")
 
+# Reviewer comment fix: Update annotation with exponentiated Hazard Ratio (HR = exp(beta))
+# label = "HR = 1.385 (1.15-1.62)\np < 0.0001",
 p1$plot <- p1$plot + 
   ggplot2::annotate(
     "text",
     x=400, y = 0.1,
     #vjust=3, hjust=1,
-    label = "HR = 1.385 (1.15-1.62)\np < 0.0001",
+    label = paste0("HR = ", round(hr_dev, 2), " (", round(hr_ci_dev[1], 2), "-", round(hr_ci_dev[2], 2), ")\np < 0.0001"),
     size = 5
   )
 
@@ -178,12 +194,6 @@ p1
 pdf(p1, file="/data/github/pca_network/results/2025-07-01/kaplan_master.pdf", height = 8, width=10)
 p1
 dev.off()
-
-# Hazard Ratio
-dev_mat$group <- as.factor(dev_mat$group)
-dev_mat$group <- relevel(dev_mat$group, ref = "0")
-fit_dev <- coxph(Surv(days_to_follow_up, bcr_status) ~ group, data = dev_mat)
-out_dev <- c(out_dev, c(round(as.numeric(coef(fit_dev)), 4), round(as.numeric(summary(fit_dev)$coef[,3]), 4),  paste(round(confint(fit_dev)[,1], 2), round(confint(fit_dev)[,2], 2), sep = "-"), summary(fit_dev)$coef[,5]))
 
 # AUC
 ROC.1 <- timeROC(T=dev_mat$days_to_follow_up,
@@ -365,8 +375,15 @@ for(i in unique(mat$study)){
   fit_dev <- coxph(Surv(days_to_follow_up, bcr_status) ~ group, data = dev_mat)
   fit_val <- coxph(Surv(days_to_follow_up, bcr_status) ~ group, data = val_mat)
   
-  out_dev <- c(out_dev, c(round(as.numeric(coef(fit_dev)), 4), round(as.numeric(summary(fit_dev)$coef[,3]), 4),  paste(round(confint(fit_dev)[,1], 2), round(confint(fit_dev)[,2], 2), sep = "-"), summary(fit_dev)$coef[,5]))
-  out_val <- c(out_val, c(round(as.numeric(coef(fit_val)), 4), round(as.numeric(summary(fit_val)$coef[,3]), 4),  paste(round(confint(fit_val)[,1], 2), round(confint(fit_val)[,2], 2), sep = "-"), summary(fit_val)$coef[,5]))
+  # Reviewer comment fix: Exponentiate Cox regression coefficient and confidence interval to report true Hazard Ratio (HR = exp(beta)) and 95% CI
+  # out_dev <- c(out_dev, c(round(as.numeric(coef(fit_dev)), 4), round(as.numeric(summary(fit_dev)$coef[,3]), 4),  paste(round(confint(fit_dev)[,1], 2), round(confint(fit_dev)[,2], 2), sep = "-"), summary(fit_dev)$coef[,5]))
+  # out_val <- c(out_val, c(round(as.numeric(coef(fit_val)), 4), round(as.numeric(summary(fit_val)$coef[,3]), 4),  paste(round(confint(fit_val)[,1], 2), round(confint(fit_val)[,2], 2), sep = "-"), summary(fit_val)$coef[,5]))
+  hr_dev <- exp(as.numeric(coef(fit_dev)))
+  hr_ci_dev <- exp(confint(fit_dev))
+  hr_val <- exp(as.numeric(coef(fit_val)))
+  hr_ci_val <- exp(confint(fit_val))
+  out_dev <- c(out_dev, c(round(hr_dev, 4), round(as.numeric(summary(fit_dev)$coef[,3]), 4), paste(round(hr_ci_dev[1], 2), round(hr_ci_dev[2], 2), sep = "-"), summary(fit_dev)$coef[,5]))
+  out_val <- c(out_val, c(round(hr_val, 4), round(as.numeric(summary(fit_val)$coef[,3]), 4), paste(round(hr_ci_val[1], 2), round(hr_ci_val[2], 2), sep = "-"), summary(fit_val)$coef[,5]))
   
   # AUC
   ROC.1 <- timeROC(T=dev_mat$days_to_follow_up,
@@ -567,7 +584,7 @@ ext_mat <- data.frame(scale(ext_mat, scale = T, center = T))
 
 ext_mat <- cbind(ext_mat, meta)
 
-ext_mat <- ext_mat[, c(names(coxboost_preds), "days_to_follow_up", "bcr_status")]
+ext_mat <- ext_mat[, c(names(coxboost_preds), "days_to_follow_up", "bcr_status", "gleason_score", "preop_psa")]
 
 # External, unseen dataset results
 fx <- formula(paste("Surv(days_to_follow_up, bcr_status) ~ ", paste(names(coxboost_preds), collapse = " + ")))
@@ -576,6 +593,7 @@ ext_fit <- coxph(fx, data = ext_mat, init = as.numeric(coxboost_preds), iter.max
 # fit is coxph on all 9 datasets above
 ext_mat$lp <- gen_lp(fit, ext_fit, "val")
 ext_mat$prob <- predict(ext_fit, ext_mat, "risk")
+saveRDS(ext_mat, file = "/data/github/pca_network/results/ext_mat_with_lp.RDS")
 
 
 fit_ext <- coxph(Surv(days_to_follow_up, bcr_status) ~ lp, ext_mat)
@@ -607,13 +625,16 @@ print("Harrells C")
 out_val <- c(out_val, round(ext_c$c.index, 4), round(ext_c$lower, 4), round(ext_c$upper, 4))
 
 ext_mat$group <- as.numeric(ext_mat$lp > median(ext_mat$lp))
-fit_ext <- survfit(Surv(days_to_follow_up, bcr_status) ~ group, data = ext_mat)
 ext_mat$group <- as.factor(ext_mat$group)
 ext_mat$group <- relevel(ext_mat$group, ref = "0")
 fit_ext <- coxph(Surv(days_to_follow_up, bcr_status) ~ group, data = ext_mat)
 
+# Reviewer comment fix: Exponentiate Cox regression coefficient and confidence interval to report true Hazard Ratio (HR = exp(beta)) and 95% CI
+hr_ext <- exp(as.numeric(coef(fit_ext)))
+hr_ci_ext <- exp(confint(fit_ext))
+
 ext_mat$group <- ifelse(ext_mat$lp > median(ext_mat$lp), "High", "Low")
-fit_ext <- survfit(Surv(days_to_follow_up, bcr_status) ~ group, data = ext_mat)
+fit_ext_km <- survfit(Surv(days_to_follow_up, bcr_status) ~ group, data = ext_mat)
 surv_object <- Surv(ext_mat$days_to_follow_up, ext_mat$bcr_status)
 res2 = survfit(surv_object ~ group, data=ext_mat)
 p1 <- ggsurvplot(res2,
@@ -627,12 +648,14 @@ p1 <- ggsurvplot(res2,
                  data=ext_mat,
                  xlab="Time (days)")
 
+# Reviewer comment fix: Update annotation with exponentiated Hazard Ratio (HR = exp(beta))
+# label = "HR = 1.479 (0.52-2.44)\np = 0.0011",
 p1$plot <- p1$plot + 
   ggplot2::annotate(
     "text",
     x=300, y = 0.1,
     #vjust=3, hjust=1,
-    label = "HR = 1.479 (0.52-2.44)\np = 0.0011",
+    label = paste0("HR = ", round(hr_ext, 2), " (", round(hr_ci_ext[1], 2), "-", round(hr_ci_ext[2], 2), ")\np = ", round(summary(fit_ext)$coef[,5], 4)),
     size = 5
   )
 
@@ -643,7 +666,9 @@ p1
 dev.off()
 
 print("Hazard Ratio")
-out_val <- c(out_val, round(as.numeric(coef(fit_ext)), 4), round(as.numeric(summary(fit_ext)$coef[,3]), 4),  paste(round(confint(fit_ext)[,1], 2), round(confint(fit_ext)[,2], 2), sep = "-"), summary(fit_ext)$coef[,5])
+# Reviewer comment fix: Exponentiate Cox regression coefficient and confidence interval to report true Hazard Ratio (HR = exp(beta)) and 95% CI
+# out_val <- c(out_val, round(as.numeric(coef(fit_ext)), 4), round(as.numeric(summary(fit_ext)$coef[,3]), 4),  paste(round(confint(fit_ext)[,1], 2), round(confint(fit_ext)[,2], 2), sep = "-"), summary(fit_ext)$coef[,5])
+out_val <- c(out_val, round(hr_ext, 4), round(as.numeric(summary(fit_ext)$coef[,3]), 4), paste(round(hr_ci_ext[1], 2), round(hr_ci_ext[2], 2), sep = "-"), summary(fit_ext)$coef[,5])
 
 ROC.1 <- timeROC(T=ext_mat$days_to_follow_up,
                  delta=ext_mat$bcr_status,
@@ -742,11 +767,11 @@ pdf("/data/github/pca_network/results/2025-07-01/5yrcalibration.pdf", width=7, h
 plot(cal5yr,  xlim=c(0.1,1), ylim=c(0.1,1), col="black", add=F, lwd=1.5)
 dev.off()
 
-my_legend =  c(paste0("1 year"),
-               paste0("3 year"),
-               paste0("5 year"))
-legend("bottomright", legend = my_legend,col=c("forestgreen", "blue", "red"),lwd=2, cex=1)
-dev.off()
+# my_legend =  c(paste0("1 year"),
+#                paste0("3 year"),
+#                paste0("5 year"))
+# legend("bottomright", legend = my_legend,col=c("forestgreen", "blue", "red"),lwd=2, cex=1)
+# dev.off()
 
 source_file <- "/data/github/pca_network/scripts/10-Coxboost.R"
 file.copy(source_file, outdir, overwrite = T)

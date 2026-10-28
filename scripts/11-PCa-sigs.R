@@ -130,7 +130,11 @@ for(author in unique(signatures$Signature)){
   ext_mat$group <- relevel(ext_mat$group, ref = "0")
   fit_ext <- coxph(Surv(days_to_follow_up, bcr_status) ~ group, data = ext_mat)
   
-  out_val <- c(out_val, round(as.numeric(coef(fit_ext)), 4), round(as.numeric(summary(fit_ext)$coef[,3]), 4),  paste(round(confint(fit_ext)[,1], 2), round(confint(fit_ext)[,2], 2), sep = "-"), summary(fit_ext)$coef[,5])
+  # Reviewer comment fix: Exponentiate Cox regression coefficient and confidence interval to report true Hazard Ratio (HR = exp(beta)) and 95% CI
+  # out_val <- c(out_val, round(as.numeric(coef(fit_ext)), 4), round(as.numeric(summary(fit_ext)$coef[,3]), 4),  paste(round(confint(fit_ext)[,1], 2), round(confint(fit_ext)[,2], 2), sep = "-"), summary(fit_ext)$coef[,5])
+  hr_ext <- exp(as.numeric(coef(fit_ext)))
+  hr_ci_ext <- exp(confint(fit_ext))
+  out_val <- c(out_val, round(hr_ext, 4), round(as.numeric(summary(fit_ext)$coef[,3]), 4), paste(round(hr_ci_ext[1], 2), round(hr_ci_ext[2], 2), sep = "-"), summary(fit_ext)$coef[,5])
 
   ROC.1 <- timeROC(T=ext_mat$days_to_follow_up,
                    delta=ext_mat$bcr_status,

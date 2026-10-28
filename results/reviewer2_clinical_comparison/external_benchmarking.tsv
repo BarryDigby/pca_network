@@ -1,0 +1,4 @@
+Model	C_Index	AUC_1yr	AUC_3yr	AUC_5yr	AIC	BIC
+Clinical Only (Gleason + PSA)	0.737 (0.645-0.828)	0.708	0.847	0.801	123.4	125.6
+23-Gene Signature Only (lp)	0.713 (0.599-0.828)	0.665	0.784	0.868	124.9	126
+Combined (Clinical + 23-Gene lp)	0.787 (0.688-0.886)	0.719	0.89	0.882	116.8	120.1

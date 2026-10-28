@@ -1,0 +1,4 @@
+Feature	coef	HR	LCI	UCI	P_val
+gleason_score	0.1776	1.194	1.072	1.331	0.001318
+preop_psa	1e-04	1	0.996	1.004	0.942902
+lp	1.4513	4.269	3.51	5.19	< 2.2e-16
